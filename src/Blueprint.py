@@ -84,14 +84,16 @@ class Blueprint:
         self.top = None
         self.dbu = None
 
-    def create_chip(self, file_out, f_start, f_end, amount_resonators=0, printed_text=None, print_frequencies=True,
-                    markers=False):
+    def create_chip(self, file_out, f_start=4, f_end=6, amount_resonators=0, frequencies=None, printed_text=None,
+                    print_frequencies=True, markers=False):
         """
         Creates a chip from the blueprint in the given frequency range and saves it automatically as a .gds file.
         :@param file_out: Name of the gds file
         :@param f_start: Start frequency
         :@param f_end: End frequency
         :@param amount_resonators: Amount of resonators on the chip. Set to 0 for a dense filling
+        :@param frequencies: A list containing the frequencies of the resonators, in GHz (replaces f_start, f_end and
+                amount_resonators)
         :@param printed_text: Can be used for displaying custom text on the chip
         :@param print_frequencies: In addition to the text, print the frequencies of the resonators
         :@param markers: Add nb5 markers (6x10) to the chip layout
@@ -101,7 +103,10 @@ class Blueprint:
         self.top = self.lay.create_cell("TOP")
         self.dbu = self.lay.dbu
 
-        self._write_structures(f_start, f_end, amount_resonators)
+        if frequencies is None:
+            frequencies = self._get_frequency_list(f_start, f_end, amount_resonators)
+
+        self._write_structures(frequencies)
         self._write_logos()
         if markers:
             self._write_markers()
@@ -111,7 +116,7 @@ class Blueprint:
 
         self.frequencies = []
 
-    def _write_structures(self, f_start, f_end, amount_resonators=0):
+    def _write_structures(self, frequencies):
         """
         Subroutine for writing the main structures.
         :@param f_start: Start frequency
@@ -149,9 +154,7 @@ class Blueprint:
             padding = self.res_params.shift_x - 800
 
         # see how many resonators fit inside
-        possible_amount = int(np.floor(2 * (self.port_params.port_x() - padding) / self.res_params.segment_w))
-        if amount_resonators == 0 or possible_amount < amount_resonators:
-            amount_resonators = possible_amount
+        amount_resonators = min(self._get_possible_amount(), len(frequencies))
 
         residual = 2 * (self.port_params.port_x() - padding) - amount_resonators * self.res_params.segment_w
 
@@ -162,13 +165,12 @@ class Blueprint:
         progress_x += self.straight_params.length
 
         # add resonators (main part)
-        if self.calc_resonator_height(calc_length(f_start)) > self.chip_params.h / 2 - 700:
+        if self.calc_resonator_height(calc_length(frequencies[-1])) > self.chip_params.h / 2 - 700:
             print("WARNING: resonator height exceeds critical height of ~" + str(self.chip_params.h / 2 - 700) +
                   "µm! Increase coupling_w for broader resonators.")
 
-        interval = (f_end - f_start) / (amount_resonators - 1)
         for i in range(amount_resonators):
-            f = f_end - i * interval
+            f = frequencies[i]
             self.res_params.length = calc_length(f)
             self.res_params.coupling_w = self.calc_coupling_length(self.res_params.length, 1e5)
 
@@ -348,6 +350,36 @@ class Blueprint:
     ##################################
     # HELPER METHODS
     ##################################
+
+    def _get_possible_amount(self):
+        """
+        Get the amount of resonators fitting into the TL
+        @return: Maximum amount
+        """
+        padding = 0
+        if self.res_params.shift_x > 800:  # or even smaller?
+            padding = self.res_params.shift_x - 800
+
+        # see how many resonators fit inside
+        return int(np.floor(2 * (self.port_params.port_x() - padding) / self.res_params.segment_w))
+
+    def _get_frequency_list(self, f_start, f_end, amount_resonators=0):
+        """
+        Calculates a list of equally spaced frequencies
+        @param f_start: Start frequency
+        @param f_end: End frequency
+        @param amount_resonators: Amount of resonators (i.e. frequencies). Assumes dense packing if zero
+        @return: A list containing the frequencies in a descending order
+        """
+        if amount_resonators == 0:
+            amount_resonators = self._get_possible_amount()
+
+        frequencies = []
+
+        interval = (f_end - f_start) / (amount_resonators - 1)
+        for i in range(amount_resonators):
+            frequencies.append(f_end - i * interval)
+        return frequencies
 
     def calc_resonator_height(self, length):
         """
