@@ -46,9 +46,9 @@ class PortParams:
             self.taper_length = 700
             self.pad_size = 500
 
-        else:
-            self.port_width = 140
-            self.port_gap = 60
+        else:  # problem: the smaller, the harder to bond; the bigger, the stronger are distant influences
+            self.port_width = 140  # 200
+            self.port_gap = 60  # 115
             self.port_ground = 50
             self.taper_length = 300
             self.pad_size = 140
@@ -155,6 +155,8 @@ class ResonatorParams:
         self.hookLength = hook_length
         self.hookUnit = hook_unit
         self.holeLength = hole_length
+
+        self.radius = self.cp.hd_holes + self.cp.ground + self.cp.gap + self.cp.width / 2
 
     def list(self):
         """

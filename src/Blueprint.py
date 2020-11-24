@@ -12,7 +12,7 @@ class Blueprint:
 
     def __init__(self, gap=6, width=10, ground=50, hd_holes=40, chip_w=10000, chip_h=6000, silver_glue_port=True,
                  port_spacing=0, p_hole_dist=50, p_hole_sigma=5, p_hole_size=5, hd_hole_dist=10, hd_hole_sigma=2.5,
-                 hd_hole_size=5, res_segment_w=800, res_coupling_ground=5, res_length=8000, res_lambda_4=1,
+                 hd_hole_size=5, res_segment_w=750, res_coupling_ground=5, res_length=8000, res_lambda_4=1,
                  res_mirror=0, res_shift_y=300, res_fingers=0, res_finger_length=26, res_finger_endgap=8,
                  res_hook_width=5, res_hook_length=3, res_hook_unit=1, res_hole_length=1):
         """
@@ -98,6 +98,7 @@ class Blueprint:
         :@param print_frequencies: In addition to the text, print the frequencies of the resonators
         :@param markers: Add nb5 markers (6x10) to the chip layout
         """
+        print("Creating chip " + file_out + "...")
 
         self.lay = pya.Layout()
         self.top = self.lay.create_cell("TOP")
@@ -180,8 +181,9 @@ class Blueprint:
 
             old_shift_y = self.res_params.shift_y
 
-            if self.res_params.coupling_w + 0.25 * 2 * np.pi * 101 + self.res_params.shift_y < self.res_params.length <\
-                    self.res_params.coupling_w + 2 * np.pi * 101 + self.res_params.shift_y:
+            if self.res_params.coupling_w + 0.25 * 2 * np.pi * self.res_params.radius + self.res_params.shift_y \
+                    < self.res_params.length < \
+                    self.res_params.coupling_w + 2 * np.pi * self.res_params.radius + self.res_params.shift_y:
                 self.res_params.shift_y = 3000  # exact value doesn't matter, because we check the length
 
             self.frequencies.append(calc_f0(self.calc_actual_length(self.res_params.length)))
@@ -378,7 +380,7 @@ class Blueprint:
 
         interval = (f_end - f_start) / (amount_resonators - 1)
         for i in range(amount_resonators):
-            frequencies.append(f_end - i * interval)
+            frequencies.append(f_start + i * interval)
         return frequencies
 
     def calc_resonator_height(self, length):
@@ -392,21 +394,22 @@ class Blueprint:
         y = self.chip_params.width / 2 + self.chip_params.gap + self.res_params.coupling_ground \
             + self.chip_params.gap + self.chip_params.width / 2
 
-        if length < self.res_params.coupling_w + 0.25 * 2 * np.pi * 101 + self.res_params.shift_y:
-            return y + 101 + length - (self.res_params.coupling_w + 0.25 * 2 * np.pi)
+        if length < self.res_params.coupling_w + 0.25 * 2 * np.pi * self.res_params.radius + self.res_params.shift_y:
+            return y + self.res_params.radius + length - (self.res_params.coupling_w + 0.25 * 2 * np.pi)
 
-        remaining_length = length - self.res_params.coupling_w - 2 * np.pi * 101 \
-                                  - self.res_params.shift_y - max(self.res_params.shift_x - 202, 0)
-        y += self.res_params.shift_y + 4 * 101
+        remaining_length = length - self.res_params.coupling_w - 2 * np.pi * self.res_params.radius \
+                                  - self.res_params.shift_y - max(self.res_params.shift_x - 2*self.res_params.radius, 0)
+        y += self.res_params.shift_y + 4 * self.res_params.radius
 
         while remaining_length > 0:
-            remaining_length -= self.res_params.w - 2 * (101 + self.chip_params.ground + self.chip_params.hd_holes
-                                                         + self.chip_params.gap + self.chip_params.width / 2)
-            if remaining_length < 101 + self.chip_params.ground:
+            remaining_length -= self.res_params.w - 2 * (self.res_params.radius + self.chip_params.ground +
+                                                         self.chip_params.hd_holes + self.chip_params.gap +
+                                                         self.chip_params.width / 2)
+            if remaining_length < self.res_params.radius + self.chip_params.ground:
                 break  # if < 101+ground, the resonator will be finished with a straight
             # always running a full pi rotation (because IBM was lazy?)
-            remaining_length -= 0.5 * 2 * np.pi * 101
-            y += 202
+            remaining_length -= 0.5 * 2 * np.pi * self.res_params.radius
+            y += 2*self.res_params.radius
 
         return y
 
@@ -418,25 +421,26 @@ class Blueprint:
         :@return: The true length of the written resonator
         """
 
-        if length < self.res_params.coupling_w + 0.25 * 2 * np.pi * 101 + self.res_params.shift_y:
+        if length < self.res_params.coupling_w + 0.25 * 2 * np.pi * self.res_params.radius + self.res_params.shift_y:
             return length
 
-        real = self.res_params.coupling_w + 2 * np.pi * 101 + self.res_params.shift_y + max(
-            self.res_params.shift_x - 202, 0)
+        real = self.res_params.coupling_w + 2 * np.pi * self.res_params.radius + self.res_params.shift_y + max(
+            self.res_params.shift_x - self.res_params.radius, 0)
         remaining_length = length - real
 
-        len_straight = self.res_params.w - 2 * (101 + self.chip_params.ground + self.chip_params.hd_holes
-                                                + self.chip_params.gap + self.chip_params.width / 2)
+        len_straight = self.res_params.w - 2 * (self.res_params.radius + self.chip_params.ground +
+                                                self.chip_params.hd_holes + self.chip_params.gap +
+                                                self.chip_params.width / 2)
 
         while remaining_length > 0:
             if remaining_length < len_straight:
                 real += remaining_length
                 break
-            elif remaining_length < len_straight + 101 + self.chip_params.ground:
+            elif remaining_length < len_straight + self.res_params.radius + self.chip_params.ground:
                 real += remaining_length
                 break
-            remaining_length -= len_straight + 0.5 * 2 * np.pi * 101
-            real += len_straight + 0.5 * 2 * np.pi * 101
+            remaining_length -= len_straight + 0.5 * 2 * np.pi * self.res_params.radius
+            real += len_straight + 0.5 * 2 * np.pi * self.res_params.radius
 
         return real
 

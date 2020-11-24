@@ -43,18 +43,7 @@ class WaferBuilder:
         # sort chip positions by ascending distance from origin
         self.chip_positions.sort(key=lambda r: r[0]**2+r[1]**2)
 
-    def create_wafer_from_folder(self, file_out, path, amount_per_chip=1):
-        """
-        Create a wafer containing all gds files from a given folder.
-        Example: create_wafer_from_folder("Wafer-W1", "../chips", 1)
-        @param file_out: Name for the wafer
-        @param path: Path to the folder containing the .gds files
-        @param amount_per_chip: Determines how often one .gds file should be placed on the wafer
-        """
-        chip_list = _load_chips_from_folder(path, amount_per_chip)
-        self._write_file(file_out, chip_list)
-
-    def create_wafer_from_list(self, file_out, chip_list):
+    def create_wafer(self, file_out, chip_list):
         """
         Create a wafer from a list containing name-amount tuples.
         @param file_out: Name for the wafer
@@ -87,7 +76,7 @@ class WaferBuilder:
             top.shapes(lay.layer(100, 0)).insert(circle)
 
         # mark structure for cutting
-        mark = _mark(400/dbu, 40/dbu)
+        mark = _mark(300/dbu, 30/dbu)
 
         # nested method to escape outer loop
         def write_chips():
@@ -113,19 +102,35 @@ class WaferBuilder:
         Path("../wafers/").mkdir(parents=True, exist_ok=True)
         lay.write("../wafers/" + file_out + ".gds")
 
+    @staticmethod
+    def load_chips(path, amount):
+        """
+        Load all chips (i.e. all files having a .gds format) from a folder, each of them with the given amount.
+        :@param path: Path to the folder
+        :@param amount: Amount of each chip
+        :@return: list that can be used for the wafer layout
+        """
+        chip_list = []
+        for filename in os.listdir(path):
+            if filename.endswith(".gds") or filename.endswith(".GDS"):
+                chip_list.append((path + "/" + filename.split(".")[0], amount))
+        return chip_list
 
-def _load_chips_from_folder(path, amount):
-    """
-    Load all chips (i.e. all files having a .gds format) from a folder, each of them with the given amount.
-    :@param path: Path to the folder
-    :@param amount: Amount of each chip
-    :@return: list that can be used for the wafer layout
-    """
-    chip_list = []
-    for filename in os.listdir(path):
-        if filename.endswith(".gds") or filename.endswith(".GDS"):
-            chip_list.append((path + "/" + filename.split(".")[0], amount))
-    return chip_list
+    @staticmethod
+    def load_prefixed_chips(path, prefix, amount):
+        """
+        Load all chips (i.e. all files having a .gds format) from a folder with a given prefix, each of them with the given
+        amount.
+        :@param path: Path to the folder
+        :@param prefix: Given prefix for the gds files
+        :@param amount: Amount of each chip
+        :@return: list that can be used for the wafer layout
+        """
+        chip_list = []
+        for filename in os.listdir(path):
+            if filename.startswith(prefix) and (filename.endswith(".gds") or filename.endswith(".GDS")):
+                chip_list.append((path + "/" + filename.split(".")[0], amount))
+        return chip_list
 
 
 def _mark(arm_length, arm_width):
