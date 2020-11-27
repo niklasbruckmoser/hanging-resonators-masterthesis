@@ -10,9 +10,10 @@ from src.Params import *
 
 class Blueprint:
 
-    def __init__(self, gap=6, width=10, ground=50, hd_holes=40, chip_w=10000, chip_h=6000, silver_glue_port=True,
+    def __init__(self, gap=6, width=10, ground=50, hd_holes=40, chip_w=10000, chip_h=6000, smooth_ports=False,
+                 silver_glue_port=True, port_width=140, taper_length=300, pad_size=140,
                  port_spacing=0, p_hole_dist=50, p_hole_sigma=5, p_hole_size=5, hd_hole_dist=10, hd_hole_sigma=2.5,
-                 hd_hole_size=5, res_segment_w=750, res_coupling_ground=5, res_length=8000, res_lambda_4=1,
+                 hd_hole_size=5, external_q=1e5, res_segment_w=750, res_coupling_ground=5, res_length=8000, res_lambda_4=1,
                  res_mirror=0, res_shift_y=300, res_fingers=0, res_finger_length=26, res_finger_endgap=8,
                  res_hook_width=5, res_hook_length=3, res_hook_unit=1, res_hole_length=1):
         """
@@ -45,7 +46,10 @@ class Blueprint:
         """
 
         self.chip_params = ChipParams(chip_w, chip_h, gap, width, ground, hd_holes)
-        self.port_params = PortParams(self.chip_params, silver_glue_port, port_spacing)
+        if (smooth_ports):
+            self.port_params = SmoothPortParams(self.chip_params, port_width, taper_length, pad_size, port_spacing)
+        else:
+            self.port_params = PortParams(self.chip_params, silver_glue_port, port_spacing)
         self.straight_params = StraightParams(self.chip_params)
         self.p_hole_params = HoleParams(self.chip_params, p_hole_dist, p_hole_sigma, p_hole_size, False)
         self.hd_hole_params = HoleParams(self.chip_params, hd_hole_dist, hd_hole_sigma, hd_hole_size, True)
@@ -79,6 +83,8 @@ class Blueprint:
 
             kappa_dict[key] = self.kappa
             _save_kappa_dict(kappa_dict)
+
+        self.external_q = external_q
 
         self.lay = None
         self.top = None
@@ -144,10 +150,16 @@ class Blueprint:
         self.top.insert(pya.DCellInstArray(hd_holes.cell_index(), trans))
 
         # add ports to layout
-        port = self.lay.create_cell("CPW_Port", "cQED", self.port_params.list())
+        if isinstance(self.port_params, SmoothPortParams):
+            port = self.lay.create_cell("CPW_Port_Smooth", "qCPW", self.port_params.list())
+        else:
+            port = self.lay.create_cell("CPW_Port", "cQED", self.port_params.list())
         trans = pya.DCplxTrans.new(1, 0, False, -self.port_params.port_x(), 0)
         self.top.insert(pya.DCellInstArray(port.cell_index(), trans))
-        trans = pya.DCplxTrans.new(1, 180, False, self.port_params.port_x(), 0)
+        if isinstance(self.port_params, SmoothPortParams):  # shift by 1nm (negligible) because of rounding errors
+            trans = pya.DCplxTrans.new(1, 180, False, self.port_params.port_x()-0.001, 0)
+        else:
+            trans = pya.DCplxTrans.new(1, 180, False, self.port_params.port_x(), 0)
         self.top.insert(pya.DCellInstArray(port.cell_index(), trans))
 
         padding = 0
@@ -166,14 +178,15 @@ class Blueprint:
         progress_x += self.straight_params.length
 
         # add resonators (main part)
-        if self.calc_resonator_height(calc_length(frequencies[-1])) > self.chip_params.h / 2 - 700:
+        if amount_resonators != 0 \
+                and self.calc_resonator_height(calc_length(frequencies[-1])) > self.chip_params.h / 2 - 700:
             print("WARNING: resonator height exceeds critical height of ~" + str(self.chip_params.h / 2 - 700) +
                   "µm! Increase coupling_w for broader resonators.")
 
         for i in range(amount_resonators):
             f = frequencies[i]
             self.res_params.length = calc_length(f)
-            self.res_params.coupling_w = self.calc_coupling_length(self.res_params.length, 1e5)
+            self.res_params.coupling_w = self.calc_coupling_length(self.res_params.length, self.external_q)
 
             # print("res " + str(i) + ": " + str(self.res_params.length) + ", " + str(self.res_params.coupling_w))
             # print("y height: " + str(_calc_res_y(res_params.length)))
@@ -444,7 +457,7 @@ class Blueprint:
 
         return real
 
-    def calc_coupling_length(self, l_res, intended_q=1e5):
+    def calc_coupling_length(self, l_res, external_q=1e5):
         """
         Calculates the needed coupling length for achieving a given Q factor. Assuming all units in microns
          and epsilon_eff = 6.45.
@@ -454,7 +467,7 @@ class Blueprint:
         :@return: The calculated coupling length
         """
         return int((_v_ph() / (2 * np.pi * calc_f0(l_res) * 1e9) * np.arcsin(
-            np.sqrt(np.pi / (2 * self.kappa ** 2 * intended_q)))) * 1e6)
+            np.sqrt(np.pi / (2 * self.kappa ** 2 * external_q)))) * 1e6)
 
 
 def calc_f0(length):

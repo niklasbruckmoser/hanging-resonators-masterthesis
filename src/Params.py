@@ -1,4 +1,5 @@
 import klayout.db as pya
+import src.library.CPWLib as cpwLib
 
 """
 This File contains all necessary parameters for the cQED klayout library. Each class has a list() method which returns
@@ -43,7 +44,7 @@ class PortParams:
             self.port_width = 514
             self.port_gap = 264
             self.port_ground = 50
-            self.taper_length = 700
+            self.taper_length = 500
             self.pad_size = 500
 
         else:  # problem: the smaller, the harder to bond; the bigger, the stronger are distant influences
@@ -68,6 +69,36 @@ class PortParams:
         return {"width": self.cp.width, "gap": self.cp.gap, "ground": self.cp.ground, "widthPort": self.port_width,
                 "gapPort": self.port_gap, "groundPort": self.port_ground, "taperLength": self.taper_length,
                 "padSize": self.pad_size, "hdHole": self.cp.hd_holes}
+
+
+class SmoothPortParams:
+    def __init__(self, cp, port_width=140, taper_length=300, pad_size=140, spacing=0):
+        """
+        Initializes smooth port parameters from the own KLayout library.
+        :@param cp: Related chip params
+        """
+        self.cp = cp
+        self.spacing = spacing
+        self.port_width = port_width
+        self.taper_length = taper_length
+        self.pad_size = pad_size
+
+        self.port_gap = cpwLib.max_port_gap(self.port_width, self.cp.width, self.cp.gap)
+
+    def port_x(self):
+        """
+        Calculates the x position for the (right mirrored) port, i.e. -port_x is the start position for the left port
+        @return: x position for the right mirrored port
+        """
+        return self.cp.w/2 - self.taper_length - self.pad_size - self.port_gap - self.spacing
+
+    def list(self):
+        """
+        Returns a param dictionary for creating KLayout cells
+        :@return: a dictionary containing all parameters
+        """
+        return {"length_taper": self.taper_length, "length_port": self.pad_size, "width_port": self.port_width, "width": self.cp.width,
+                "gap": self.cp.gap, "ground": self.cp.ground, "hole": self.cp.hd_holes}
 
 
 class StraightParams:
