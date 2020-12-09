@@ -20,7 +20,6 @@ class HangingResonatorFingers(pya.PCellDeclarationHelper):
         super(HangingResonatorFingers, self).__init__()
 
         # declare the parameters
-        self.param("mirrored", self.TypeDouble, "mirrored coupling", default=0)
         self.param("segment_length", self.TypeDouble, "segment length", default=700)
         self.param("length", self.TypeDouble, "resonator length", default=4000)
         self.param("x_offset", self.TypeDouble, "x offset", default=0)
@@ -54,7 +53,6 @@ class HangingResonatorFingers(pya.PCellDeclarationHelper):
         dbu = self.layout.dbu
 
         # parameters in database units
-        mirrored = self.mirrored
         segment_length = self.segment_length / dbu
         length = self.length / dbu
         x_offset = self.x_offset / dbu
@@ -77,10 +75,10 @@ class HangingResonatorFingers(pya.PCellDeclarationHelper):
         hook_unit = self.hook_unit / dbu
 
         # create shape
-        create_res_fingers(self, pya.DPoint(0, 0), 0, mirrored, segment_length, length, x_offset, y_offset, q_ext, coupling_ground, radius, shorted, width_tl, gap_tl, width, gap, ground, hole, self.n_fingers, finger_length, finger_end_gap, finger_spacing, hook_width, hook_length, hook_unit)
+        create_res_fingers(self, pya.DPoint(0, 0), 0, segment_length, length, x_offset, y_offset, q_ext, coupling_ground, radius, shorted, width_tl, gap_tl, width, gap, ground, hole, self.n_fingers, finger_length, finger_end_gap, finger_spacing, hook_width, hook_length, hook_unit)
 
 
-def create_res_fingers(obj, start, rotation, mirrored, segment_length, length, x_offset, y_offset, q_ext, coupling_ground, radius, shorted, width_tl, gap_tl, width, gap, ground, hole, n_fingers, finger_length, finger_end_gap, finger_spacing, hook_width, hook_length, hook_unit):
+def create_res_fingers(obj, start, rotation, segment_length, length, x_offset, y_offset, q_ext, coupling_ground, radius, shorted, width_tl, gap_tl, width, gap, ground, hole, n_fingers, finger_length, finger_end_gap, finger_spacing, hook_width, hook_length, hook_unit):
 
     print("creating resonator with fingers")
 
@@ -89,27 +87,16 @@ def create_res_fingers(obj, start, rotation, mirrored, segment_length, length, x
     coupling_length = calc_coupling_length(width_tl, gap_tl, width, gap, coupling_ground, length, q_ext)
     # curr = pya.DPoint(start.x-radius-coupling_length, start.y+width+2*gap+coupling_ground)
 
-    if not mirrored:
-        curr = pya.DPoint(start.x-radius-coupling_length, start.y+width+2*gap+coupling_ground)
-        create_end(obj, curr, 180+rotation, 0, width, gap, ground, hole)
+    curr = pya.DPoint(-segment_length/2+x_offset-coupling_length, start.y+width/2+width_tl/2+gap+gap_tl+coupling_ground)
+    create_end(obj, curr, 180+rotation, 0, width, gap, ground, hole)
 
-        curr = create_straight(obj, curr, rotation, coupling_length, width, gap, ground, hole)
-        length -= coupling_length
-        curr = create_curve(obj, curr, rotation, radius, 90, 0, width, gap, ground, hole)
-        length -= np.pi/180*radius*90
-    else:
-        curr = pya.DPoint(start.x+radius+coupling_length, start.y+width+2*gap+coupling_ground)
-        create_end(obj, curr, rotation, 0, width, gap, ground, hole)
-
-        curr = create_straight(obj, curr, 180+rotation, coupling_length, width, gap, ground, hole)
-        length -= coupling_length
-        curr = create_curve(obj, curr, 180+rotation, radius, 90, 1, width, gap, ground, hole)
-        length -= np.pi/180*radius*90
-
-
+    curr = create_straight(obj, curr, rotation, coupling_length, width, gap, ground, hole)
+    length -= coupling_length
+    curr = create_curve(obj, curr, rotation, radius, 90, 0, width, gap, ground, hole)
+    length -= np.pi/180*radius*90
 
     if length < y_offset:
-        curr = create_straight(obj, curr, 90+rotation, length, width, gap, ground, hole)
+        curr = create_straight_fingers(obj, curr, 90+rotation, length, width, gap, ground, hole, n_fingers, finger_length, finger_end_gap, finger_spacing, hook_width, hook_length, hook_unit)
         create_end(obj, curr, 90+rotation, shorted, width, gap, ground, hole)
         return
     curr = create_straight_fingers(obj, curr, 90+rotation, y_offset, width, gap, ground, hole, n_fingers, finger_length, finger_end_gap, finger_spacing, hook_width, hook_length, hook_unit)
@@ -135,7 +122,6 @@ def create_res_fingers(obj, start, rotation, mirrored, segment_length, length, x
     # begin meandering loop
 
     right = True
-    end_angle = 0
 
     while True:
         if length < np.pi/180*radius*180:
@@ -153,13 +139,6 @@ def create_res_fingers(obj, start, rotation, mirrored, segment_length, length, x
         curr = create_straight(obj, curr, rotation if right is True else 180+rotation, segment_length, width, gap, ground, hole)
         length -= segment_length
         right = not right
-
-    if end_angle == 0:
-        create_end(obj, curr, rotation if right else 180+rotation, shorted, width, gap, ground, hole)
-    else:
-        create_end(obj, curr, 180-end_angle+rotation if right else 360+end_angle+rotation, shorted, width, gap, ground, hole)
-
-
 
 def calc_coupling_length(width_cpw, gap_cpw, width_res, gap_res, coupling_ground, length, q_ext=1e5):
     """

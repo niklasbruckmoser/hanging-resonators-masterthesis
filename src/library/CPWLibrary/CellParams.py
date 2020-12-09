@@ -174,10 +174,9 @@ class HoleParams:
 
 class HangingResonatorParams:
 
-    def __init__(self, mirrored, segment_length, length, x_offset, y_offset, q_ext, coupling_ground, radius, shorted, width_tl,
+    def __init__(self, segment_length, length, x_offset, y_offset, q_ext, coupling_ground, radius, shorted, width_tl,
                  gap_tl, width, gap, ground, hole):
 
-        self.mirrored = mirrored
         self.segment_length = segment_length
         self.length = length
         self.x_offset = x_offset
@@ -198,7 +197,7 @@ class HangingResonatorParams:
         Returns a param dictionary for creating KLayout cells
         :@return: a dictionary containing all parameters
         """
-        return {"mirrored": self.mirrored,"segment_length": self.segment_length, "length": self.length, "x_offset": self.x_offset,
+        return {"segment_length": self.segment_length, "length": self.length, "x_offset": self.x_offset,
                 "y_offset": self.y_offset, "q_ext": self.q_ext, "coupling_ground": self.coupling_ground,
                 "radius": self.radius, "shorted": self.shorted, "width_tl": self.width_tl, "gap_tl": self.gap_tl, "width": self.width,
                 "gap": self.gap, "ground": self.ground, "hdHole": self.hole}

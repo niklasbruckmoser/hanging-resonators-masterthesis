@@ -11,15 +11,16 @@ from src.library.CPWLibrary.End import create_end
 
 class HangingResonator(pya.PCellDeclarationHelper):
     """
-    Coplanar waveguide port
+    Hanging resonator. The origin is centered in x direction and at the position of the transmission line in y direction
     """
+
+    epsilon_eff = 6.45
 
     def __init__(self):
         # Important: initialize the super class
         super(HangingResonator, self).__init__()
 
         # declare the parameters
-        self.param("mirrored", self.TypeDouble, "mirrored coupling", default=0)
         self.param("segment_length", self.TypeDouble, "segment length", default=700)
         self.param("length", self.TypeDouble, "resonator length", default=4000)
         self.param("x_offset", self.TypeDouble, "x offset", default=0)
@@ -46,7 +47,6 @@ class HangingResonator(pya.PCellDeclarationHelper):
         dbu = self.layout.dbu
 
         # parameters in database units
-        mirrored = self.mirrored
         segment_length = self.segment_length / dbu
         length = self.length / dbu
         x_offset = self.x_offset / dbu
@@ -61,37 +61,24 @@ class HangingResonator(pya.PCellDeclarationHelper):
         gap = self.gap / dbu
         ground = self.ground / dbu
         hole = self.hole / dbu
+
         # create shape
+        create_res(self, pya.DPoint(0, 0), 0, segment_length, length, x_offset, y_offset, q_ext, coupling_ground, radius, shorted, width_tl, gap_tl, width, gap, ground, hole)
 
-        create_res(self, pya.DPoint(0, 0), 0, mirrored, segment_length, length, x_offset, y_offset, q_ext, coupling_ground, radius, shorted, width_tl, gap_tl, width, gap, ground, hole)
 
-
-def create_res(obj, start, rotation, mirrored, segment_length, length, x_offset, y_offset, q_ext, coupling_ground, radius, shorted, width_tl, gap_tl, width, gap, ground, hole):
-
-    print("creating resonator")
+def create_res(obj, start, rotation, segment_length, length, x_offset, y_offset, q_ext, coupling_ground, radius, shorted, width_tl, gap_tl, width, gap, ground, hole):
 
     dbu = obj.layout.dbu
 
     coupling_length = calc_coupling_length(width_tl, gap_tl, width, gap, coupling_ground, length, q_ext)
-    # curr = pya.DPoint(start.x-radius-coupling_length, start.y+width+2*gap+coupling_ground)
 
-    if not mirrored:
-        curr = pya.DPoint(start.x-radius-coupling_length, start.y+width+2*gap+coupling_ground)
-        create_end(obj, curr, 180+rotation, 0, width, gap, ground, hole)
+    curr = pya.DPoint(-segment_length/2+x_offset-coupling_length, start.y+width/2+width_tl/2+gap+gap_tl+coupling_ground)
+    create_end(obj, curr, 180+rotation, 0, width, gap, ground, hole)
 
-        curr = create_straight(obj, curr, rotation, coupling_length, width, gap, ground, hole)
-        length -= coupling_length
-        curr = create_curve(obj, curr, rotation, radius, 90, 0, width, gap, ground, hole)
-        length -= np.pi/180*radius*90
-    else:
-        curr = pya.DPoint(start.x+radius+coupling_length, start.y+width+2*gap+coupling_ground)
-        create_end(obj, curr, rotation, 0, width, gap, ground, hole)
-
-        curr = create_straight(obj, curr, 180+rotation, coupling_length, width, gap, ground, hole)
-        length -= coupling_length
-        curr = create_curve(obj, curr, 180+rotation, radius, 90, 1, width, gap, ground, hole)
-        length -= np.pi/180*radius*90
-
+    curr = create_straight(obj, curr, rotation, coupling_length, width, gap, ground, hole)
+    length -= coupling_length
+    curr = create_curve(obj, curr, rotation, radius, 90, 0, width, gap, ground, hole)
+    length -= np.pi/180*radius*90
 
 
     if length < y_offset:
@@ -121,7 +108,6 @@ def create_res(obj, start, rotation, mirrored, segment_length, length, x_offset,
     # begin meandering loop
 
     right = True
-    end_angle = 0
 
     while True:
         if length < np.pi/180*radius*180:
@@ -140,12 +126,6 @@ def create_res(obj, start, rotation, mirrored, segment_length, length, x_offset,
         length -= segment_length
         right = not right
 
-    if end_angle == 0:
-        create_end(obj, curr, rotation if right else 180+rotation, shorted, width, gap, ground, hole)
-    else:
-        create_end(obj, curr, 180-end_angle+rotation if right else 360+end_angle+rotation, shorted, width, gap, ground, hole)
-
-
 
 def calc_coupling_length(width_cpw, gap_cpw, width_res, gap_res, coupling_ground, length, q_ext=1e5):
     """
@@ -157,7 +137,7 @@ def calc_coupling_length(width_cpw, gap_cpw, width_res, gap_res, coupling_ground
     :@return: The calculated coupling length
     """
     key = (width_cpw, gap_cpw, width_res, gap_res,
-           coupling_ground, 6.45)
+           coupling_ground, HangingResonator.epsilon_eff)
 
     kappa_dict = _load_kappa_dict()
 
@@ -205,7 +185,7 @@ def _v_ph():
     Get the phase velocity for Si-Air
     @return: Approximate phase velocity of light
     """
-    return 3e8 / np.sqrt(6.45)
+    return 3e8 / np.sqrt(HangingResonator.epsilon_eff)
 
 
 
