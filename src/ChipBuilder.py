@@ -60,8 +60,9 @@ class PadTest:
 
         self._write_structures(res_params)
         self._write_logos()
+        self._write_markers()
         self._write_text(text)
-        # self._perform_boolean_operations()
+        self._perform_boolean_operations()
         self._write_file(file_out)
 
         self.frequencies = []
@@ -134,7 +135,6 @@ class PadTest:
 
             up = not up
 
-
     def _write_fast_holes(self):
         """
         Subroutine for writing the logos on the chip.
@@ -174,6 +174,51 @@ class PadTest:
                                    self.chip_height / 2 - logo_spacing - 325)
         self.top.insert(pya.DCellInstArray(cell_wmi, trans))
 
+    def _write_markers(self):
+        """
+        Subroutine for writing markers on the chip.
+        """
+
+        l0 = self.lay.layer(pya.LayerInfo(0, 0))
+        l2 = self.lay.layer(pya.LayerInfo(2, 0))
+
+        marker_width = 10 / self.dbu
+        focus_width = 20 / self.dbu
+        x_shift = 1000 / self.dbu - marker_width
+        y_shift = x_shift
+        marker = pya.Box(-marker_width/2, -marker_width/2,
+                         marker_width/2, marker_width/2)
+        focus = pya.Polygon([pya.DPoint(-focus_width, 0),
+                             pya.DPoint(0, -focus_width),
+                             pya.DPoint(0, focus_width),
+                             pya.DPoint(focus_width, 0)])
+        focus_trans = pya.ICplxTrans(1, 0, False, 10*marker_width + focus_width, 0)
+        mask_trans = pya.ICplxTrans(20, 0, False, 0, 0)
+
+        # top left
+        top_left_trans = pya.ICplxTrans(1, 0, False, -self.chip_width / (2 * self.dbu) + x_shift, self.chip_height / (2 * self.dbu) - y_shift)
+        self.top.shapes(l0).insert(marker.transformed(top_left_trans))
+        self.top.shapes(l2).insert(marker.transformed(top_left_trans * mask_trans))
+        self.top.shapes(l0).insert(focus.transformed(top_left_trans * focus_trans))
+        self.top.shapes(l2).insert(marker.transformed(top_left_trans * focus_trans * mask_trans))
+        # top right
+        top_right_trans = pya.ICplxTrans(1, 0, False, self.chip_width / (2 * self.dbu) - x_shift, self.chip_height / (2 * self.dbu) - y_shift)
+        self.top.shapes(l0).insert(marker.transformed(top_right_trans))
+        self.top.shapes(l2).insert(marker.transformed(top_right_trans * mask_trans))
+        self.top.shapes(l0).insert(focus.transformed(top_right_trans * focus_trans))
+        self.top.shapes(l2).insert(marker.transformed(top_right_trans * focus_trans * mask_trans))
+        # bottom left
+        bottom_left_trans = pya.ICplxTrans(1, 0, False, -self.chip_width / (2 * self.dbu) + x_shift, -self.chip_height / (2 * self.dbu) + y_shift)
+        self.top.shapes(l0).insert(marker.transformed(bottom_left_trans))
+        self.top.shapes(l2).insert(marker.transformed(bottom_left_trans * mask_trans))
+        self.top.shapes(l0).insert(focus.transformed(bottom_left_trans * focus_trans))
+        self.top.shapes(l2).insert(marker.transformed(bottom_left_trans * focus_trans * mask_trans))
+        # bottom right
+        bottom_right_trans = pya.ICplxTrans(1, 0, False, self.chip_width / (2 * self.dbu) - x_shift, -self.chip_height / (2 * self.dbu) + y_shift)
+        self.top.shapes(l0).insert(marker.transformed(bottom_right_trans))
+        self.top.shapes(l2).insert(marker.transformed(bottom_right_trans * mask_trans))
+        self.top.shapes(l0).insert(focus.transformed(bottom_right_trans * focus_trans))
+        self.top.shapes(l2).insert(marker.transformed(bottom_right_trans * focus_trans * mask_trans))
 
     def _write_text(self, text=None, frequencies=True):
         """

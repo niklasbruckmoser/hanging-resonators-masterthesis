@@ -143,6 +143,7 @@ def create_straight_fingers(obj, start, rotation, length, width, gap, ground, ho
         n_fingers = n_fingers_max
     x_start = length / 2 - (finger_spacing + math.ceil(n_fingers / 2) * (finger_spacing + 2 * gap + width)) / 2 + finger_spacing + gap + width/2
 
+    # place each finger
     for i in range(n_fingers):
         x_shift = x_start + math.ceil((i - 1) / 2) * (2 * gap + width + finger_spacing)
         angle = 0
@@ -155,6 +156,7 @@ def create_straight_fingers(obj, start, rotation, length, width, gap, ground, ho
         obj.cell.shapes(l2).insert(pya.Polygon(L_hook_list).transformed(shift * finger_shift))
         obj.cell.shapes(l2).insert(pya.Polygon(L_hook_list).transformed(shift * L_hook_shift_mirror))
 
+    # perform boolean operation
     processor = pya.ShapeProcessor()
     processor.boolean(obj.layout, obj.cell, l1, obj.layout, obj.cell, l2, obj.cell.shapes(l1),
                       pya.EdgeProcessor.ModeANotB, True, True, True)

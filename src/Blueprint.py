@@ -38,11 +38,11 @@ class Blueprint:
         :@param res_shift_y: Y-shift of the resonator away from the TL
         :@param res_fingers: Amount of fingers in the resonator y shift
         :@param res_finger_length: Length of each finger
-        :@param res_finger_endgap: @Leo?
-        :@param res_hook_width: @Leo?
-        :@param res_hook_length: @Leo?
-        :@param res_hook_unit: @Leo?
-        :@param res_hole_length: @Leo?
+        :@param res_finger_endgap: Gap at the end of each finger
+        :@param res_hook_width: Width of each hook
+        :@param res_hook_length: Length of each hook
+        :@param res_hook_unit: Width of the smallest structures of each hook
+        :@param res_hole_length: Length/Height of the hole in each hook
         """
 
         self.chip_params = ChipParams(chip_w, chip_h, gap, width, ground, hd_holes)
