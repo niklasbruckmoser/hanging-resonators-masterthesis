@@ -5,6 +5,9 @@ from src.library.CPWLibrary.Straight import *
 from src.library.CPWLibrary.End import *
 from src.library.CPWLibrary.Hole import *
 from src.library.CPWLibrary.HangingResonator import *
+from src.library.CPWLibrary.StraightFingers import *
+from src.library.CPWLibrary.HangingResonatorFingers import *
+
 
 class Main(pya.Library):
     """
@@ -20,9 +23,11 @@ class Main(pya.Library):
         self.layout().register_pcell("PEnd", End())
         self.layout().register_pcell("Hole", Hole())
         self.layout().register_pcell("HangingResonator", HangingResonator())
-
+        self.layout().register_pcell("StraightFingers", StraightFingers())
+        self.layout().register_pcell("HangingResonatorFingers", HangingResonatorFingers())
 
         self.register("QC")
+
 
 # Instantiate and register the library
 Main()
