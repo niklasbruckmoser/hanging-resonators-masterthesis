@@ -24,14 +24,12 @@ def write_text(layout, text):
 
         for letter in line:
             if buffer is None and letter == "´":
-                print("detected buffer")
                 buffer = ""
                 continue
 
             if buffer is not None:
                 if letter == "´":
                     letter = buffer
-                    print(letter)
                     buffer = None
                 else:
                     buffer += letter
