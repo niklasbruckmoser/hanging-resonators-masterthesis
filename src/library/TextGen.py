@@ -20,7 +20,23 @@ def write_text(layout, text):
 
         text.shapes(aux.layer(2, 0)).insert(pya.Box(-3*letter_spacing/dbu, y/dbu, 0, y/dbu+height/dbu))
 
+        buffer = None
+
         for letter in line:
+            if buffer is None and letter == "´":
+                print("detected buffer")
+                buffer = ""
+                continue
+
+            if buffer is not None:
+                if letter == "´":
+                    letter = buffer
+                    print(letter)
+                    buffer = None
+                else:
+                    buffer += letter
+                    continue
+
             if letter == " ":
                 letter = "space"
             letter_cell = aux.cell_by_name(letter)

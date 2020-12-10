@@ -25,7 +25,7 @@ class ChipBuilder:
         self.top = None
         self.dbu = None
 
-    def create_chip(self, file_out, res_params, text=None, markers=False, inverted_markers=False):
+    def create_chip(self, file_out, res_params, text=None, markers=False):
         """
         Creates a chip from the blueprint in the given frequency range and saves it automatically as a .gds file.
         :@param file_out: Name of the gds file
@@ -47,7 +47,7 @@ class ChipBuilder:
         self._write_structures(res_params)
         self._write_logos()
         if markers:
-            self._write_markers(inverted_markers)
+            self._write_markers_leo()
         self._write_text(text)
         self._perform_boolean_operations()
         self._write_file(file_out)
@@ -229,7 +229,7 @@ class ChipBuilder:
             text += "\n"
 
         if frequencies is True:
-            text += "f0 (GHz): "
+            text += "´f0´ (GHz): "
             for i in range(len(self.frequencies)):
                 if len(self.frequencies) > 16 and i == np.floor(len(self.frequencies) / 2):
                     text += "\n"
