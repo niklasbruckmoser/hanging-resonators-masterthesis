@@ -5,6 +5,7 @@ from pathlib import Path
 import numpy as np
 import src.coplanar_coupler
 import src.library.CPW_pieces
+import src.library.TextGen as TextGen
 from src.Params import *
 
 
@@ -157,7 +158,7 @@ class Blueprint:
         trans = pya.DCplxTrans.new(1, 0, False, -self.port_params.port_x(), 0)
         self.top.insert(pya.DCellInstArray(port.cell_index(), trans))
         if isinstance(self.port_params, SmoothPortParams):  # shift by 1nm (negligible) because of rounding errors
-            trans = pya.DCplxTrans.new(1, 180, False, self.port_params.port_x()-0.001, 0)
+            trans = pya.DCplxTrans.new(1, 180, False, self.port_params.port_x()-self.dbu, 0)
         else:
             trans = pya.DCplxTrans.new(1, 180, False, self.port_params.port_x(), 0)
         self.top.insert(pya.DCellInstArray(port.cell_index(), trans))
@@ -271,7 +272,7 @@ class Blueprint:
         if frequencies is True:
             text += "f0 (GHz): "
             for i in range(len(self.frequencies)):
-                if len(self.frequencies) > 12 and i == np.floor(len(self.frequencies) / 2):
+                if len(self.frequencies) > 16 and i == np.floor(len(self.frequencies) / 2):
                     text += "\n"
                 text += "{:.2f}".format(self.frequencies[i])
                 if i < len(self.frequencies) - 1:
@@ -279,22 +280,13 @@ class Blueprint:
 
         lines = text.splitlines()
 
-        if len(lines) > 1:
-            y_shift = (-(self.chip_params.h / 2 - 150) + (len(lines) - 1) * 150.) / self.dbu
-        else:
-            y_shift = -(self.chip_params.h / 2 - 150) / self.dbu
+        y_shift = (-self.chip_params.h/2 + len(lines)*150.) / self.dbu
 
         for line in lines:
-            region = pya.TextGenerator.default_generator().text(line, 0.001, 150)
-            width = region.bbox().width()
-            height = region.bbox().height()
-            region.move(-width / 2, y_shift)
-            region.insert_into(self.lay, self.top.cell_index(), self.lay.layer(pya.LayerInfo(0, 0)))
+            text = TextGen.write_text(self.lay, line)
+            TextGen.place_cell_center(self.lay, self.top, text, 3, 0, y_shift*self.dbu)
+            y_shift -= 150 / self.dbu
 
-            self.top.shapes(self.lay.layer(pya.LayerInfo(14, 0))).insert(
-                pya.Box(-width / 2 - text_spacing, y_shift - text_spacing, width / 2 + text_spacing,
-                        y_shift + height + text_spacing))
-            y_shift -= 150. / self.dbu
 
     def _perform_boolean_operations(self):
         """
@@ -306,6 +298,7 @@ class Blueprint:
         # define layers for convenience
         l0 = self.lay.layer(pya.LayerInfo(0, 0))  # logos and text
         l1 = self.lay.layer(pya.LayerInfo(1, 0))  # main structure
+        l2 = self.lay.layer(pya.LayerInfo(2, 0))  # text background for removing periodic holes
         l10 = self.lay.layer(pya.LayerInfo(10, 0))  # spacing
         l11 = self.lay.layer(pya.LayerInfo(11, 0))  # high density hole mask
         l12 = self.lay.layer(pya.LayerInfo(12, 0))  # periodic holes
@@ -328,6 +321,8 @@ class Blueprint:
                           pya.EdgeProcessor.ModeANotB, True, True, True)
         processor.boolean(self.lay, self.top, l12, self.lay, self.top, l14, self.top.shapes(l12),
                           pya.EdgeProcessor.ModeANotB, True, True, True)
+        processor.boolean(self.lay, self.top, l12, self.lay, self.top, l2, self.top.shapes(l12),
+                          pya.EdgeProcessor.ModeANotB, True, True, True)
 
         # imo, the mask is negative -> boolean operations to invert the structure
         processor.boolean(self.lay, self.top, l10, self.lay, self.top, l11, self.top.shapes(l10),
@@ -347,6 +342,7 @@ class Blueprint:
         self.lay.clear_layer(l11)
         self.lay.clear_layer(l120)  # not really sure why this layer even exists... maybe rewrite the CPW_pieces class
         self.lay.clear_layer(l14)
+        self.lay.clear_layer(l2)
 
         self.lay.clear_layer(l0)
         self.lay.clear_layer(l12)

@@ -23,6 +23,8 @@ class WaferBuilder:
 
         self.chip_positions = [(x, y)]  # center positions
 
+        fill_factor = 0.8  # 80% of the radius will be used (doesn't take chip dimensions into account)
+
         # init the chip positions (not optimized, but no need to)
         for i in range(1, int(wafer_diameter/min(spacing_x, spacing_y))):
             if i % 2 == 0:
@@ -31,12 +33,12 @@ class WaferBuilder:
                 s = 1
             for _ in range(i):
                 x += s*spacing_x
-                if (x**2 + y**2) > (wafer_diameter/2*0.8)**2:
+                if (x**2 + y**2) > (wafer_diameter/2*fill_factor)**2:
                     continue
                 self.chip_positions.append((x, y))
             for _ in range(i):
                 y += s*spacing_y
-                if (x**2 + y**2) > (wafer_diameter/2*0.8)**2:
+                if (x**2 + y**2) > (wafer_diameter/2*fill_factor)**2:
                     continue
                 self.chip_positions.append((x, y))
 

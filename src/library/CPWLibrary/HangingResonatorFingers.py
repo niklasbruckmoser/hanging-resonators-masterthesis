@@ -75,14 +75,14 @@ class HangingResonatorFingers(pya.PCellDeclarationHelper):
         hook_unit = self.hook_unit / dbu
 
         # create shape
-        create_res_fingers(self, pya.DPoint(0, 0), 0, segment_length, length, x_offset, y_offset, q_ext, coupling_ground, radius, shorted, width_tl, gap_tl, width, gap, ground, hole, self.n_fingers, finger_length, finger_end_gap, finger_spacing, hook_width, hook_length, hook_unit)
+        create_res_fingers(self, pya.DPoint(0, 0), 0, segment_length, length, x_offset, y_offset, q_ext,
+                           coupling_ground, radius, shorted, width_tl, gap_tl, width, gap, ground, hole, self.n_fingers,
+                           finger_length, finger_end_gap, finger_spacing, hook_width, hook_length, hook_unit)
 
 
-def create_res_fingers(obj, start, rotation, segment_length, length, x_offset, y_offset, q_ext, coupling_ground, radius, shorted, width_tl, gap_tl, width, gap, ground, hole, n_fingers, finger_length, finger_end_gap, finger_spacing, hook_width, hook_length, hook_unit):
-
-    print("creating resonator with fingers")
-
-    dbu = obj.layout.dbu
+def create_res_fingers(obj, start, rotation, segment_length, length, x_offset, y_offset, q_ext, coupling_ground, radius,
+                       shorted, width_tl, gap_tl, width, gap, ground, hole, n_fingers, finger_length, finger_end_gap,
+                       finger_spacing, hook_width, hook_length, hook_unit):
 
     coupling_length = calc_coupling_length(width_tl, gap_tl, width, gap, coupling_ground, length, q_ext)
     # curr = pya.DPoint(start.x-radius-coupling_length, start.y+width+2*gap+coupling_ground)
