@@ -8,6 +8,10 @@ import src.library.CPW_pieces
 import src.library.TextGen as TextGen
 from src.Params import *
 
+"""
+@deprecated
+Use the new CPWLibrary + ChipBuilder instead
+"""
 
 class Blueprint:
 

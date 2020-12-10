@@ -2,6 +2,11 @@ import klayout.db as pya
 import src.library.CPWLib as cpwLib
 
 """
+@deprecated
+Use ChipBuilder and CellParams instead
+"""
+
+"""
 This File contains all necessary parameters for the cQED klayout library. Each class has a list() method which returns
 a dictionary for the corresponding PCell in the library.
 """

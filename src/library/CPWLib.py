@@ -1,28 +1,25 @@
-
-## depending on if this is run in standalone python or kLayout python, module is called differently
-import sys
 import klayout.db as pya
 import numpy as np
 
-# if sys.version_info[0] == 2:  # v2 does not have importlib
-#     import pkgutil
-#     pyaLoad = pkgutil.find_loader('klayout')
-# else:
-#     import importlib
-#     pyaLoad = importlib.find_loader('klayout')
-# if pyaLoad is not None:
-#     import klayout.db as pya
-#     # import parts file, at same location as this library
-#     from src.library.CPW_parts import *
+"""
+@deprecated
+Use the new CPWLibrary instead
+"""
 
-
-# define layers(?)
-
+# extracted data from txline for 50 ohm impedance for 525um substrate and 0.15um film, assuming ground beneath
 x_data = [0,20,40,60,80,100,120,140,160,180,200,220,240,260,280,300]
 y_data = [0,12,23,35,47,59,72,86,100,116,133,152,172,196,223,250]
 
 
 def polyfit_with_fixed_points(x, y, xf, yf):
+    """
+    Method for fitting data and forcing through a point
+    @param x: x data
+    @param y: y data
+    @param xf: forced x
+    @param yf: forced y
+    @return: params for a 3rd order fit
+    """
     n = 3  # 3rd order polynomial fit is sufficient
     mat = np.empty((n + 1 + len(xf),) * 2)
     vec = np.empty((n + 1 + len(xf),))
@@ -39,6 +36,7 @@ def polyfit_with_fixed_points(x, y, xf, yf):
     vec[n + 1:] = yf
     params = np.linalg.solve(mat, vec)
     return params[:n + 1]
+
 
 class CPW_Port_Smoothed(pya.PCellDeclarationHelper):
     """
@@ -84,14 +82,18 @@ class CPW_Port_Smoothed(pya.PCellDeclarationHelper):
 
         create_smooth_port(self, length_taper, length_port, width_port, width_cpw, gap_cpw, ground, hole)
 
-        # create_cpw_port(self, widthPort, groundPort, gapPort, widthCPW, groundCPW, gapCPW, taperLength, padSize, hdHole, pya.DPoint(0, 0), 0, False)
-
-
-
 
 def create_smooth_port(obj, length_taper, length_port, width_port, width_cpw, gap_cpw, ground, hole):
-
-
+    """
+    Main method for creating the port - contains the geometry
+    @param length_taper: taper length
+    @param length_port: length of the port - not including taper length
+    @param width_port: width of the port
+    @param width_cpw: width of the CPW
+    @param gap_cpw: gap of the CPW
+    @param ground: ground size (area without holes)
+    @param hole: high density hole mask
+    """
     dbu = obj.layout.dbu
     w_list = []
     gap_list = []
@@ -102,7 +104,8 @@ def create_smooth_port(obj, length_taper, length_port, width_port, width_cpw, ga
     get_gap = np.polynomial.Polynomial(polyfit_with_fixed_points(np.array(x_data), np.array(y_data),
                                                                     np.array([width_cpw*dbu]), np.array([gap_cpw*dbu])))
 
-    gap_max = get_gap(width_port*dbu) / dbu
+    gap_max = int(get_gap(width_port*dbu) / dbu)
+
 
     hole_list.append(pya.DPoint(0, width_port/2+gap_max+ground+hole))
     mask_list.append(pya.DPoint(hole, width_port/2+gap_max+ground))
@@ -114,7 +117,7 @@ def create_smooth_port(obj, length_taper, length_port, width_port, width_cpw, ga
 
     for z in np.linspace(0, 1, 100):
         h_w = get_height(z)*(width_port-width_cpw)/2+width_cpw/2
-        h_g = get_gap(2*h_w*dbu) / dbu
+        h_g = int(get_gap(2*h_w*dbu) / dbu)
 
         w_list.append(pya.DPoint(x_offset + z * length_taper, h_w))
         gap_list.append(pya.DPoint(x_offset + z * length_taper, h_w + h_g))
@@ -124,7 +127,7 @@ def create_smooth_port(obj, length_taper, length_port, width_port, width_cpw, ga
 
     for z in np.linspace(1, 0, 100):
         h_w = get_height(z)*(width_port-width_cpw)/2+width_cpw/2
-        h_g = get_gap(2*h_w*dbu) / dbu
+        h_g = int(get_gap(2*h_w*dbu) / dbu)
 
         w_list.append(pya.DPoint(x_offset + z * length_taper, -h_w))
         gap_list.append(pya.DPoint(x_offset + z * length_taper, -(h_w + h_g)))
@@ -166,6 +169,11 @@ def create_smooth_port(obj, length_taper, length_port, width_port, width_cpw, ga
 
 
 def get_height(z):
+    """
+    Calculates the height to a corresponding x value
+    @param z: x coordinate normalized between 0 and 1
+    @return: the height normalized between 0 and 1. Returns 1 for z=0 and 0 for z=1
+    """
     if z < 0:
         return 1
     if z > 1:
@@ -173,99 +181,19 @@ def get_height(z):
     return 2*z**3-3*z**2+1
 
 
-# TODO better structure
+# TODO better structure?
 def max_port_gap(width_port, width_cpw, gap_cpw):
+    """
+    Get the port gap for a corresponding port width. Needs the width and gap of the CPW, because the gap value is
+    extracted from a fit that matches the CPW sizes.
+    @param width_port: width of the port
+    @param width_cpw: width of the CPW
+    @param gap_cpw: gap of the CPW
+    @return:
+    """
     get_gap = np.polynomial.Polynomial(polyfit_with_fixed_points(np.array(x_data), np.array(y_data),
                                                                  np.array([width_cpw]), np.array([gap_cpw])))
     return get_gap(width_port)
-
-
-
-
-
-def create_cpw_port(obj, widthPort, groundPort, gapPort, widthCPW, groundCPW, gapCPW, taperLength, padSize, hole, initial_point, orientation, mirror):
-
-    # global transformations
-    if orientation == 0:  # horizontal to left
-        trans = pya.ICplxTrans(1, 0, False, 0, 0)
-    elif orientation == 1:  # vertical to top
-        trans = pya.ICplxTrans(1, 90, False, 0, 0)
-    elif orientation == 2:  # horizontal to right
-        trans = pya.ICplxTrans(1, 180, False, 0, 0)
-    else:  # vertical to bottom
-        trans = pya.ICplxTrans(1, 270, False, 0, 0)
-
-    shifttopos = pya.ICplxTrans(1, 0, False, initial_point.x, initial_point.y)
-
-    if mirror:
-        mirroralongx = pya.ICplxTrans.M0
-    else:
-        mirroralongx = pya.ICplxTrans.R0
-
-    allTrans = shifttopos * mirroralongx * trans
-
-
-
-    # center conductor
-
-
-
-
-    # create shape
-    # centre conductor
-    obj.cell.shapes(obj.layout.layer(1, 0)).insert(pya.Polygon([
-        pya.DPoint(0, widthCPW / 2),
-        pya.DPoint(-taperLength, widthPort / 2),
-        pya.DPoint(-(taperLength + padSize), widthPort / 2),
-        pya.DPoint(-(taperLength + padSize), -widthPort / 2),
-        pya.DPoint(-taperLength, -widthPort / 2),
-        pya.DPoint(0, -widthCPW / 2),]).transformed(allTrans))
-
-    # groundplane
-    obj.cell.shapes(obj.layout.layer(1, 0)).insert(pya.Polygon([
-        pya.DPoint(0, gapCPW + widthCPW / 2), pya.DPoint(-taperLength, gapPort + widthPort / 2),
-        pya.DPoint(-(taperLength + padSize + gapPort), gapPort + widthPort / 2), pya.DPoint(-(taperLength + padSize + gapPort), -(gapPort + widthPort / 2)),
-        pya.DPoint(-taperLength, -(gapPort + widthPort / 2)), pya.DPoint(0, -(gapCPW + widthCPW / 2)),
-        pya.DPoint(0, -(groundCPW + gapCPW + widthCPW / 2)), pya.DPoint(-taperLength, -(groundPort + gapPort + widthPort / 2)),
-        pya.DPoint(-(taperLength + padSize + gapPort + groundPort), -(groundPort + gapPort + widthPort / 2)),
-        pya.DPoint(-(taperLength + padSize + gapPort + groundPort), (groundPort + gapPort + widthPort / 2)),
-        pya.DPoint(-taperLength, (groundPort + gapPort + widthPort / 2)),
-        pya.DPoint(0, (groundCPW + gapCPW + widthCPW / 2))]).transformed(allTrans))
-
-    # cutout mask
-    obj.cell.shapes(obj.layout.layer(10, 0)).insert(pya.Polygon([
-        pya.DPoint(0, -(groundCPW + gapCPW + widthCPW / 2)), pya.DPoint(-taperLength, -(groundPort + gapPort + widthPort / 2)),
-        pya.DPoint(-(taperLength + padSize + gapPort + groundPort), -(groundPort + gapPort + widthPort / 2)),
-        pya.DPoint(-(taperLength + padSize + gapPort + groundPort), (groundPort + gapPort + widthPort / 2)),
-        pya.DPoint(-taperLength, (groundPort + gapPort + widthPort / 2)),
-        pya.DPoint(0, (groundCPW + gapCPW + widthCPW / 2))]).transformed(allTrans))
-
-    # additional cutout mask for buried structures
-    obj.cell.shapes(obj.layout.layer(120, 0)).insert(pya.Polygon([
-        pya.DPoint(0, -(groundCPW / 2 + gapCPW + widthCPW / 2)), pya.DPoint(-taperLength, -(groundPort / 2 + gapPort + widthPort / 2)),
-        pya.DPoint(-(taperLength + padSize + gapPort + groundPort / 2), -(groundPort / 2 + gapPort + widthPort / 2)),
-        pya.DPoint(-(taperLength + padSize + gapPort + groundPort / 2 ), (groundPort / 2 + gapPort + widthPort / 2)),
-        pya.DPoint(-taperLength, (groundPort / 2 + gapPort + widthPort / 2)),
-        pya.DPoint(0, (groundCPW / 2 + gapCPW + widthCPW / 2))]).transformed(allTrans))
-
-    # hd Hole pattern
-    obj.cell.shapes(obj.layout.layer(11, 0)).insert(pya.Polygon([
-        pya.DPoint(0, -(groundCPW + gapCPW + widthCPW / 2)), pya.DPoint(-taperLength, -(groundPort + gapPort + widthPort / 2)),
-        pya.DPoint(-(taperLength + padSize + gapPort + groundPort), -(groundPort + gapPort + widthPort / 2)),
-        pya.DPoint(-(taperLength + padSize + gapPort + groundPort), (groundPort + gapPort + widthPort / 2)),
-        pya.DPoint(-taperLength, (groundPort + gapPort + widthPort / 2)),
-        pya.DPoint(0, (groundCPW + gapCPW + widthCPW / 2)),
-        pya.DPoint(0, (hole + groundCPW + gapCPW + widthCPW / 2)), pya.DPoint(-taperLength, (hole + groundPort + gapPort + widthPort / 2)),
-        pya.DPoint(-(hole + taperLength + padSize + gapPort + groundPort), (hole + groundPort + gapPort + widthPort / 2)),
-        pya.DPoint(-(hole + taperLength + padSize + gapPort + groundPort), -(hole + groundPort + gapPort + widthPort / 2)),
-        pya.DPoint(-taperLength, -(hole + groundPort + gapPort + widthPort / 2)),
-        pya.DPoint(0, -(hole + groundCPW + gapCPW + widthCPW / 2))]).transformed(allTrans))
-
-    # return end point of resonator cpw
-    return allTrans.trans(pya.DPoint(0, 0))
-
-
-
 
 
 class Mask(pya.Library):
