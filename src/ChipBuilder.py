@@ -8,7 +8,7 @@ import src.library.CPWLibrary.HangingResonator as HangingResonator
 from pathlib import Path
 from src.library.CPWLibrary.CellParams import *
 
-class PadTest:
+class ChipBuilder:
 
     def __init__(self, chip_width=10000, chip_height=6000, width=10, gap=6, ground=50, hole=40):
 
@@ -25,7 +25,7 @@ class PadTest:
         self.top = None
         self.dbu = None
 
-    def create_chip(self, file_out, text=None):
+    def create_chip(self, file_out, res_params, text=None, markers=False, inverted_markers=False):
         """
         Creates a chip from the blueprint in the given frequency range and saves it automatically as a .gds file.
         :@param file_out: Name of the gds file
@@ -44,23 +44,10 @@ class PadTest:
         self.top = self.lay.create_cell("TOP")
         self.dbu = self.lay.dbu
 
-        res_params = [
-            HangingResonatorParams(950, 1600, 950, 100, 1e5, 12, 80, 1, 10, 6, 10, 6, 50, 40),
-            HangingResonatorParams(950, 1700, 950, 100, 1e5, 12, 80, 1, 10, 6, 10, 6, 50, 40),
-            HangingResonatorParams(950, 2000, 950, 100, 1e5, 12, 80, 1, 10, 6, 10, 6, 50, 40),
-            HangingResonatorParams(950, 2500, 950, 100, 1e5, 12, 80, 1, 10, 6, 10, 6, 50, 40),
-            HangingResonatorParams(950, 3000, 950, 100, 1e5, 12, 80, 1, 10, 6, 10, 6, 50, 40),
-            HangingResonatorParams(950, 3500, 950, 100, 1e5, 12, 80, 1, 10, 6, 10, 6, 50, 40),
-            HangingResonatorParams(950, 4000, 950, 100, 1e5, 12, 80, 1, 10, 6, 10, 6, 50, 40),
-            HangingResonatorParams(950, 4500, 950, 100, 1e5, 12, 80, 1, 10, 6, 10, 6, 50, 40),
-            HangingResonatorParams(950, 5000, 950, 100, 1e5, 12, 80, 1, 10, 6, 10, 6, 50, 40),
-            HangingResonatorParams(950, 5500, 950, 100, 1e5, 12, 80, 1, 10, 6, 10, 6, 50, 40),
-            HangingResonatorParams(950, 6000, 950, 100, 1e5, 12, 80, 1, 10, 6, 10, 6, 50, 40),
-        ]
-
         self._write_structures(res_params)
         self._write_logos()
-        self._write_markers()
+        if markers:
+            self._write_markers(inverted_markers)
         self._write_text(text)
         self._perform_boolean_operations()
         self._write_file(file_out)
@@ -78,7 +65,6 @@ class PadTest:
 
         x_prog = -self.chip_width/2
         # Transmission line
-
         port_params = PortParams(100, 200, 400, -300, 10, 6, 50, 40)
         port = self.lay.create_cell("Port", "QC", port_params.as_list())
         trans = pya.DCplxTrans.new(1, 0, False, x_prog, 0)
@@ -112,26 +98,21 @@ class PadTest:
 
         safe_zone += residual / np.ceil(len(res_params)/2)
 
-        x_up = -tl_len/2
-        x_down = -tl_len/2 + safe_zone/2
         up = True
+
+        x_prog = -tl_len/2
 
         for res in res_params:
 
             self.frequencies.append(HangingResonator.calc_f0(res.length*1000))
 
-            if up:
-                x_up += safe_zone/2
+            x_prog += safe_zone/2
+            if type(res) == HangingResonatorParams:
                 res_cell = self.lay.create_cell("HangingResonator", "QC", res.as_list())
-                trans = pya.DCplxTrans.new(1, 0, not up, x_up, 0)
-                self.top.insert(pya.DCellInstArray(res_cell.cell_index(), trans))
-                x_up += safe_zone/2
             else:
-                x_down += safe_zone/2
-                res_cell = self.lay.create_cell("HangingResonator", "QC", res.as_list())
-                trans = pya.DCplxTrans.new(1, 0, not up, x_down, 0)
-                self.top.insert(pya.DCellInstArray(res_cell.cell_index(), trans))
-                x_down += safe_zone/2
+                res_cell = self.lay.create_cell("HangingResonatorFingers", "QC", res.as_list())
+            trans = pya.DCplxTrans.new(1, 0, not up, x_prog, 0)
+            self.top.insert(pya.DCellInstArray(res_cell.cell_index(), trans))
 
             up = not up
 
@@ -174,7 +155,7 @@ class PadTest:
                                    self.chip_height / 2 - logo_spacing - 325)
         self.top.insert(pya.DCellInstArray(cell_wmi, trans))
 
-    def _write_markers(self):
+    def _write_markers_leo(self):
         """
         Subroutine for writing markers on the chip.
         """
@@ -219,6 +200,21 @@ class PadTest:
         self.top.shapes(l2).insert(marker.transformed(bottom_right_trans * mask_trans))
         self.top.shapes(l0).insert(focus.transformed(bottom_right_trans * focus_trans))
         self.top.shapes(l2).insert(marker.transformed(bottom_right_trans * focus_trans * mask_trans))
+
+    def _write_markers(self, inverted=False):
+        """
+        Subroutine for writing nanobeam markers on the chip
+        """
+        print("Writing markers...")
+
+        if inverted:
+            file = "nb5marker_inverted"
+        else:
+            file = "nb5marker"
+        self.lay.read("../templates/" + file + ".gds")
+        cell_marker = self.lay.cell_by_name("nb5marker")
+        trans = pya.DCplxTrans.new(1, 0, False, 0, 0)
+        self.top.insert(pya.DCellInstArray(cell_marker, trans))
 
     def _write_text(self, text=None, frequencies=True):
         """
@@ -329,23 +325,7 @@ class PadTest:
                    ground=50, hole=40):
         """
         generate a list of resonator params for given parameters
-        @param f_start:
-        @param f_end:
-        @param amount_resonators:
-        @param segment_length:
-        @param x_offset:
-        @param y_offset:
-        @param q_ext:
-        @param coupling_ground:
-        @param radius:
-        @param shorted:
-        @param width_tl:
-        @param gap_tl:
-        @param width:
-        @param gap:
-        @param ground:
-        @param hole:
-        @return:
+        @return: a list containing ResonatorParams
         """
         params = []
 
@@ -361,6 +341,30 @@ class PadTest:
 
         return params
 
+    def res_finger_params(self, f_start, f_end, amount_resonators=11, segment_length=950, x_offset=950, y_offset=300,
+                          q_ext=1e5, coupling_ground=10, radius=100, shorted=1, width_tl=10, gap_tl=6, width=10, gap=6,
+                          ground=50, hole=40, n_fingers=8, finger_length=10, finger_end_gap=8, finger_spacing=10,
+                          hook_width=5, hook_length=3, hook_unit=1):
+        """
+        generate a list of resonator params for given parameters
+        @return: a list containing ResonatorParams
+        """
+        params = []
 
-pd = PadTest()
-pd.create_chip("curve")
+        if x_offset == 0:
+            x_offset = segment_length/2-radius/2
+
+        interval = (f_end - f_start) / (amount_resonators - 1)
+        for i in range(amount_resonators):
+            f0 = f_start + i*interval
+            length = HangingResonator.calc_length(f0) / 1000
+            params.append(HangingResonatorFingersParams(segment_length, length, x_offset, y_offset, q_ext,
+                                                        coupling_ground, radius, shorted, width_tl, gap_tl, width, gap,
+                                                        ground, hole, n_fingers, finger_length, finger_end_gap,
+                                                        finger_spacing, hook_width, hook_length, hook_unit))
+
+        return params
+
+
+# pd = ChipBuilder()
+# pd.create_chip("curve", pd.res_params(4, 6))
