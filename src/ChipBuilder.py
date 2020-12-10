@@ -28,15 +28,10 @@ class ChipBuilder:
     def create_chip(self, file_out, res_params, text=None, markers=False):
         """
         Creates a chip from the blueprint in the given frequency range and saves it automatically as a .gds file.
-        :@param file_out: Name of the gds file
-        :@param f_start: Start frequency
-        :@param f_end: End frequency
-        :@param amount_resonators: Amount of resonators on the chip. Set to 0 for a dense filling
-        :@param frequencies: A list containing the frequencies of the resonators, in GHz (replaces f_start, f_end and
-                amount_resonators)
-        :@param printed_text: Can be used for displaying custom text on the chip
-        :@param print_frequencies: In addition to the text, print the frequencies of the resonators
-        :@param markers: Add nb5 markers (6x10) to the chip layout
+        @param file_out: file name of the .gds file
+        @param res_params: list of ResonatorParams, see @CellParams
+        @param text: Written text on the chip. Supports \n
+        @param markers: if True, writes nb5 markers onto the layout
         """
         print("Creating chip " + file_out + "...")
 
@@ -94,9 +89,9 @@ class ChipBuilder:
             new_sz = res.segment_length + 2*(res.radius + res.ground + res.hole + res.gap + res.width/2)
             safe_zone = new_sz if new_sz > safe_zone else safe_zone
 
-        residual = tl_len - (safe_zone*np.ceil(len(res_params)/2))
+        residual = tl_len - safe_zone*(len(res_params)/2+0.5)
 
-        safe_zone += residual / np.ceil(len(res_params)/2)
+        safe_zone += residual / (len(res_params)/2+0.5)
 
         up = True
 
@@ -264,7 +259,6 @@ class ChipBuilder:
         l12 = self.lay.layer(pya.LayerInfo(12, 0))  # periodic holes
         l13 = self.lay.layer(pya.LayerInfo(13, 0))  # high density holes
         l14 = self.lay.layer(pya.LayerInfo(14, 0))  # logo background for removing periodic holes
-        l120 = self.lay.layer(pya.LayerInfo(120, 0))  # ? ? ?
 
         # flatten, otherwise boolean operations won't work
         self.top.flatten(1)
@@ -298,7 +292,6 @@ class ChipBuilder:
         # remove auxiliary layers
         self.lay.clear_layer(l10)
         self.lay.clear_layer(l11)
-        self.lay.clear_layer(l120)  # not really sure why this layer even exists... maybe rewrite the CPW_pieces class
         self.lay.clear_layer(l14)
         self.lay.clear_layer(l2)
 
