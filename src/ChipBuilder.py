@@ -160,7 +160,7 @@ class ChipBuilder:
 
         marker_width = 10 / self.dbu
         focus_width = 20 / self.dbu
-        x_shift = 1000 / self.dbu - marker_width
+        x_shift = 1015 / self.dbu - marker_width
         y_shift = x_shift
         marker = pya.Box(-marker_width/2, -marker_width/2,
                          marker_width/2, marker_width/2)
@@ -169,7 +169,7 @@ class ChipBuilder:
                              pya.DPoint(0, focus_width),
                              pya.DPoint(focus_width, 0)])
         focus_trans = pya.ICplxTrans(1, 0, False, 10*marker_width + focus_width, 0)
-        mask_trans = pya.ICplxTrans(20, 0, False, 0, 0)
+        mask_trans = pya.ICplxTrans(40, 0, False, 0, 0)
 
         # top left
         top_left_trans = pya.ICplxTrans(1, 0, False, -self.chip_width / (2 * self.dbu) + x_shift, self.chip_height / (2 * self.dbu) - y_shift)
@@ -336,7 +336,7 @@ class ChipBuilder:
 
     def res_fingers_params(self, f_start, f_end, amount_resonators=11, segment_length=950, x_offset=950, y_offset=300,
                           q_ext=1e5, coupling_ground=10, radius=100, shorted=1, width_tl=10, gap_tl=6, width=10, gap=6,
-                          ground=50, hole=40, n_fingers=5, finger_length=20, finger_end_gap=6, finger_spacing=20,
+                          ground=50, hole=40, n_fingers=20, finger_length=20, finger_end_gap=6, finger_spacing=20,
                           hook_width=5, hook_length=2, hook_unit=1):
         """
         generate a list of resonator params for given parameters
