@@ -25,7 +25,7 @@ class ChipBuilder:
         self.top = None
         self.dbu = None
 
-    def create_chip(self, file_out, res_params, text=None, markers=False):
+    def create_chip(self, file_out, res_params, text=None, markers=False, hole_mask=True):
         """
         Creates a chip from the blueprint in the given frequency range and saves it automatically as a .gds file.
         @param file_out: file name of the .gds file
@@ -39,6 +39,8 @@ class ChipBuilder:
         self.top = self.lay.create_cell("TOP")
         self.dbu = self.lay.dbu
 
+        if hole_mask:
+            self._write_fast_holes()
         self._write_structures(res_params)
         self._write_logos()
         if markers:
@@ -54,13 +56,11 @@ class ChipBuilder:
         Subroutine for writing the main structures.
         """
 
-        self._write_fast_holes()
-
         print("Writing structures...")
 
         x_prog = -self.chip_width/2
         # Transmission line
-        port_params = PortParams(100, 200, 400, -300, 10, 6, 50, 40)
+        port_params = PortParams(130, 200, 400, -300, 10, 6, 50, 40)
         port = self.lay.create_cell("Port", "QC", port_params.as_list())
         trans = pya.DCplxTrans.new(1, 0, False, x_prog, 0)
         self.top.insert(pya.DCellInstArray(port.cell_index(), trans))
@@ -241,7 +241,6 @@ class ChipBuilder:
             TextGen.place_cell_center(self.lay, self.top, text, 3, 0, y_shift*self.dbu)
             y_shift -= 150 / self.dbu
 
-
     def _perform_boolean_operations(self):
         """
         Subroutine for performing the boolean layer operations. This has to be the last step before saving the gds file.
@@ -322,9 +321,6 @@ class ChipBuilder:
         """
         params = []
 
-        if x_offset == 0:
-            x_offset = segment_length/2-radius/2
-
         interval = (f_end - f_start) / (amount_resonators - 1)
         for i in range(amount_resonators):
             f0 = f_start + i*interval
@@ -344,9 +340,6 @@ class ChipBuilder:
         """
         params = []
 
-        if x_offset == 0:
-            x_offset = segment_length/2-radius/2
-
         interval = (f_end - f_start) / (amount_resonators - 1)
         for i in range(amount_resonators):
             f0 = f_start + i*interval
@@ -357,7 +350,3 @@ class ChipBuilder:
                                                         finger_spacing, hook_width, hook_length, hook_unit))
 
         return params
-
-
-# pd = ChipBuilder()
-# pd.create_chip("curve", pd.res_params(4, 6))
