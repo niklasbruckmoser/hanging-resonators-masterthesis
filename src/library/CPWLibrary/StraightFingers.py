@@ -23,10 +23,10 @@ class StraightFingers(pya.PCellDeclarationHelper):
         self.param("hole", self.TypeDouble, "hole mask", default=40)
         self.param("n_fingers", self.TypeInt, "number of fingers", default=4)
         self.param("finger_length", self.TypeDouble, "finger length", default=26)
-        self.param("finger_end_gap", self.TypeDouble, "gap at finger end", default=8)
+        self.param("finger_end_gap", self.TypeDouble, "gap at finger end", default=6)
         self.param("finger_spacing", self.TypeDouble, "spacing between fingers", default=20)
         self.param("hook_width", self.TypeDouble, "hook width", default=5)
-        self.param("hook_length", self.TypeDouble, "hook length", default=3)
+        self.param("hook_length", self.TypeDouble, "hook length", default=2.5)
         self.param("hook_unit", self.TypeDouble, "hook unit", default=1)
 
     def display_text_impl(self):
@@ -113,29 +113,29 @@ def create_straight_fingers(obj, start, rotation, length, width, gap, ground, ho
     obj.cell.shapes(l11).insert(pya.Polygon(hole_l_list).transformed(shift))
 
     # define finger dimensions
-    hook_y = width / 2 + gap + finger_length
+    hook_y = width / 2 + finger_length
     finger_list = [pya.DPoint(-width / 2, width / 2),
-                   pya.DPoint(-width / 2, width / 2 + gap + finger_length),
+                   pya.DPoint(-width / 2, width / 2 + finger_length),
                    pya.DPoint(-hook_width / 2, hook_y),
                    pya.DPoint(-hook_width / 2, hook_y + hook_length),
                    pya.DPoint(-hook_unit / 2, hook_y + hook_length),
                    pya.DPoint(-hook_unit / 2, hook_y + hook_length - hook_unit),
                    pya.DPoint(-hook_width / 2 + hook_unit, hook_y + hook_length - hook_unit),
-                   pya.DPoint(-hook_width / 2 + hook_unit, hook_y + hook_unit),
-                   pya.DPoint(hook_width / 2 - hook_unit, hook_y + hook_unit),
+                   pya.DPoint(-hook_width / 2 + hook_unit, hook_y),
+                   pya.DPoint(hook_width / 2 - hook_unit, hook_y),
                    pya.DPoint(hook_width / 2 - hook_unit, hook_y + hook_length - hook_unit),
                    pya.DPoint(hook_unit / 2, hook_y + hook_length - hook_unit),
                    pya.DPoint(hook_unit / 2, hook_y + hook_length),
                    pya.DPoint(hook_width / 2, hook_y + hook_length),
                    pya.DPoint(hook_width / 2, hook_y),
-                   pya.DPoint(width / 2, width / 2 + gap + finger_length),
+                   pya.DPoint(width / 2, width / 2 + finger_length),
                    pya.DPoint(width / 2, width / 2)]
     L_hook_list = [pya.DPoint(hook_width / 2 + hook_unit, hook_y + finger_end_gap),
                    pya.DPoint(hook_width / 2 + 2 * hook_unit, hook_y + finger_end_gap),
-                   pya.DPoint(hook_width / 2 + 2 * hook_unit, hook_y + hook_length + 3 * hook_unit),
-                   pya.DPoint(hook_width / 2 + 3 * hook_unit, hook_y + hook_length + 3 * hook_unit),
+                   pya.DPoint(hook_width / 2 + 2 * hook_unit, hook_y + hook_length + 2 * hook_unit),
                    pya.DPoint(hook_width / 2 + 3 * hook_unit, hook_y + hook_length + 2 * hook_unit),
-                   pya.DPoint(hook_width / 2 + hook_unit, hook_y + hook_length + 2 * hook_unit)]
+                   pya.DPoint(hook_width / 2 + 3 * hook_unit, hook_y + hook_length + 1 * hook_unit),
+                   pya.DPoint(hook_width / 2 + hook_unit, hook_y + hook_length + 1 * hook_unit)]
 
     # calc maximum number of fingers
     n_fingers_max = 2 * int((length - finger_spacing) / (finger_spacing + 2 * gap + width))
@@ -151,7 +151,7 @@ def create_straight_fingers(obj, start, rotation, length, width, gap, ground, ho
             angle = 180
         finger_shift = pya.ICplxTrans(1, angle, False, x_shift, 0)
         L_hook_shift_mirror = pya.ICplxTrans(1, angle + 180, True, x_shift, 0)
-        obj.cell.shapes(l1).insert(pya.Box(-width / 2 - gap, width / 2 + gap, width / 2 + gap, width / 2 + gap + finger_length + finger_end_gap).transformed(shift * finger_shift))
+        obj.cell.shapes(l1).insert(pya.Box(-width / 2 - gap, width / 2 + gap, width / 2 + gap, width / 2 + finger_length + finger_end_gap).transformed(shift * finger_shift))
         obj.cell.shapes(l2).insert(pya.Polygon(finger_list).transformed(shift * finger_shift))
         obj.cell.shapes(l2).insert(pya.Polygon(L_hook_list).transformed(shift * finger_shift))
         obj.cell.shapes(l2).insert(pya.Polygon(L_hook_list).transformed(shift * L_hook_shift_mirror))

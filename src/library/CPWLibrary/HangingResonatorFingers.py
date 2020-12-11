@@ -36,10 +36,10 @@ class HangingResonatorFingers(pya.PCellDeclarationHelper):
         self.param("hole", self.TypeDouble, "hole mask", default=40)
         self.param("n_fingers", self.TypeInt, "number of fingers", default=4)
         self.param("finger_length", self.TypeDouble, "finger length", default=26)
-        self.param("finger_end_gap", self.TypeDouble, "gap at finger end", default=8)
+        self.param("finger_end_gap", self.TypeDouble, "gap at finger end", default=6)
         self.param("finger_spacing", self.TypeDouble, "spacing between fingers", default=20)
         self.param("hook_width", self.TypeDouble, "hook width", default=5)
-        self.param("hook_length", self.TypeDouble, "hook length", default=3)
+        self.param("hook_length", self.TypeDouble, "hook length", default=2.5)
         self.param("hook_unit", self.TypeDouble, "hook unit", default=1)
 
     def display_text_impl(self):
