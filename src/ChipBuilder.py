@@ -60,8 +60,7 @@ class ChipBuilder:
 
         x_prog = -self.chip_width/2
         # Transmission line
-        # port_params = PortParams(100, 200, 400, -300, 10, 6, 50, 40)
-        port_params = PortParams()
+        port_params = PortParams(100, 200, 400, -300, 10, 6, 50, 40)
         port = self.lay.create_cell("Port", "QC", port_params.as_list())
         trans = pya.DCplxTrans.new(1, 0, False, x_prog, 0)
         self.top.insert(pya.DCellInstArray(port.cell_index(), trans))
@@ -337,8 +336,8 @@ class ChipBuilder:
 
     def res_fingers_params(self, f_start, f_end, amount_resonators=11, segment_length=950, x_offset=950, y_offset=300,
                           q_ext=1e5, coupling_ground=10, radius=100, shorted=1, width_tl=10, gap_tl=6, width=10, gap=6,
-                          ground=50, hole=40, n_fingers=8, finger_length=10, finger_end_gap=6, finger_spacing=20,
-                          hook_width=5, hook_length=2.5, hook_unit=1):
+                          ground=50, hole=40, n_fingers=5, finger_length=20, finger_end_gap=6, finger_spacing=20,
+                          hook_width=5, hook_length=2, hook_unit=1):
         """
         generate a list of resonator params for given parameters
         @return: a list containing ResonatorParams

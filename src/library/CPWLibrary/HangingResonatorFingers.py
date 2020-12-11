@@ -3,11 +3,13 @@ import numpy as np
 import os
 import pickle
 import src.coplanar_coupler as coupler
+import math
 
 from src.library.CPWLibrary.Straight import create_straight
 from src.library.CPWLibrary.StraightFingers import create_straight_fingers
 from src.library.CPWLibrary.Curve import create_curve
 from src.library.CPWLibrary.End import create_end
+from src.library.CPWLibrary.EndHooks import create_end_hooks
 
 
 class HangingResonatorFingers(pya.PCellDeclarationHelper):
@@ -83,12 +85,16 @@ class HangingResonatorFingers(pya.PCellDeclarationHelper):
 def create_res_fingers(obj, start, rotation, segment_length, length, x_offset, y_offset, q_ext, coupling_ground, radius,
                        shorted, width_tl, gap_tl, width, gap, ground, hole, n_fingers, finger_length, finger_end_gap,
                        finger_spacing, hook_width, hook_length, hook_unit):
+    odd = False
+    if n_fingers % 2 == 1:
+        odd = True
+        n_fingers -= 1
 
     coupling_length = calc_coupling_length(width_tl, gap_tl, width, gap, coupling_ground, length, q_ext)
     # curr = pya.DPoint(start.x-radius-coupling_length, start.y+width+2*gap+coupling_ground)
 
     curr = pya.DPoint(-segment_length/2+x_offset-coupling_length, start.y+width/2+width_tl/2+gap+gap_tl+coupling_ground)
-    create_end(obj, curr, 180+rotation, 0, width, gap, ground, hole)
+    create_end(obj, curr, 180+rotation, shorted, width, gap, ground, hole)
 
     curr = create_straight(obj, curr, rotation, coupling_length, width, gap, ground, hole)
     length -= coupling_length
@@ -99,7 +105,7 @@ def create_res_fingers(obj, start, rotation, segment_length, length, x_offset, y
         curr = create_straight_fingers(obj, curr, 90+rotation, length, width, gap, ground, hole, n_fingers, finger_length, finger_end_gap, finger_spacing, hook_width, hook_length, hook_unit)
         create_end(obj, curr, 90+rotation, shorted, width, gap, ground, hole)
         return
-    curr = create_straight_fingers(obj, curr, 90+rotation, y_offset, width, gap, ground, hole, n_fingers, finger_length, finger_end_gap, finger_spacing, hook_width, hook_length, hook_unit)
+    curr = create_straight(obj, curr, 90+rotation, y_offset, width, gap, ground, hole)
     length -= y_offset
 
     if length < np.pi/180*radius*90:
@@ -121,21 +127,36 @@ def create_res_fingers(obj, start, rotation, segment_length, length, x_offset, y
 
     # begin meandering loop
 
+    straight_finger_length = finger_spacing + math.ceil(n_fingers / 2) * (finger_spacing + width)
+
     right = True
 
     while True:
-        if length < np.pi/180*radius*180:
-            end_angle = 180*length/np.pi/radius
-            curr = create_curve(obj, curr, 180+rotation if right is True else rotation, radius, end_angle, right, width, gap, ground, hole)
-            create_end(obj, curr, 180-end_angle+rotation if right else 360+end_angle+rotation, shorted, width, gap, ground, hole)
-            return
         curr = create_curve(obj, curr, 180+rotation if right is True else rotation, radius, 180, right, width, gap, ground, hole)
         length -= np.pi/180*radius*180
 
-        if length < segment_length:
-            curr = create_straight(obj, curr, rotation if right is True else 180+rotation, length, width, gap, ground, hole)
-            create_end(obj, curr, rotation if right else 180+rotation, shorted, width, gap, ground, hole)
-            return
+        if length < segment_length + np.pi/180*radius*180 + np.pi/180*radius*90 + straight_finger_length:
+            last_straight_length = length - np.pi/180*radius*90 - straight_finger_length
+            if last_straight_length > segment_length:
+                curr = create_straight(obj, curr, rotation if right is True else 180 + rotation, segment_length, width, gap, ground, hole)
+                length -= segment_length
+                right = not right
+                curr = create_curve(obj, curr, 180 + rotation if right is True else rotation, radius, 90, right, width, gap, ground, hole)
+                length -= np.pi / 180 * radius * 90
+                curr = create_straight(obj, curr, 90 + rotation, length - straight_finger_length, width, gap, ground, hole)
+                length -= length - straight_finger_length
+                curr = create_straight_fingers(obj, curr, 90 + rotation, straight_finger_length, width, gap, ground, hole, n_fingers, finger_length, finger_end_gap, finger_spacing, hook_width, hook_length, hook_unit)
+                create_end_hooks(obj, curr, 90 + rotation, width, gap, ground, hole, odd, finger_end_gap, hook_width, hook_length, hook_unit)
+                return
+            else:
+                curr = create_straight(obj, curr, rotation if right is True else 180 + rotation, last_straight_length, width, gap, ground, hole)
+                length -= last_straight_length
+                right = not right
+                curr = create_curve(obj, curr, 180+rotation if right is True else rotation, radius, 90, right, width, gap, ground, hole)
+                length -= np.pi / 180 * radius * 90
+                curr = create_straight_fingers(obj, curr, 90+rotation, straight_finger_length, width, gap, ground, hole, n_fingers, finger_length, finger_end_gap, finger_spacing, hook_width, hook_length, hook_unit)
+                create_end_hooks(obj, curr, 90 + rotation, width, gap, ground, hole, odd, finger_end_gap, hook_width, hook_length, hook_unit)
+                return
         curr = create_straight(obj, curr, rotation if right is True else 180+rotation, segment_length, width, gap, ground, hole)
         length -= segment_length
         right = not right

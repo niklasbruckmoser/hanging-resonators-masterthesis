@@ -132,20 +132,20 @@ def create_straight_fingers(obj, start, rotation, length, width, gap, ground, ho
                    pya.DPoint(width / 2, width / 2)]
     L_hook_list = [pya.DPoint(hook_width / 2 + hook_unit, hook_y + finger_end_gap),
                    pya.DPoint(hook_width / 2 + 2 * hook_unit, hook_y + finger_end_gap),
-                   pya.DPoint(hook_width / 2 + 2 * hook_unit, hook_y + hook_length + 2 * hook_unit),
+                   pya.DPoint(hook_width / 2 + 2 * hook_unit, hook_y + hook_length + 3 * hook_unit),
+                   pya.DPoint(hook_width / 2 + 3 * hook_unit, hook_y + hook_length + 3 * hook_unit),
                    pya.DPoint(hook_width / 2 + 3 * hook_unit, hook_y + hook_length + 2 * hook_unit),
-                   pya.DPoint(hook_width / 2 + 3 * hook_unit, hook_y + hook_length + 1 * hook_unit),
-                   pya.DPoint(hook_width / 2 + hook_unit, hook_y + hook_length + 1 * hook_unit)]
+                   pya.DPoint(hook_width / 2 + hook_unit, hook_y + hook_length + 2 * hook_unit)]
 
     # calc maximum number of fingers
-    n_fingers_max = 2 * int((length - finger_spacing) / (finger_spacing + 2 * gap + width))
+    n_fingers_max = 2 * int((length - finger_spacing) / (finger_spacing + width))
     if n_fingers > n_fingers_max:
         n_fingers = n_fingers_max
-    x_start = length / 2 - (finger_spacing + math.ceil(n_fingers / 2) * (finger_spacing + 2 * gap + width)) / 2 + finger_spacing + gap + width/2
+    x_start = length / 2 - (finger_spacing + math.ceil(n_fingers / 2) * (finger_spacing + width)) / 2 + finger_spacing + width/2
 
     # place each finger
     for i in range(n_fingers):
-        x_shift = x_start + math.ceil((i - 1) / 2) * (2 * gap + width + finger_spacing)
+        x_shift = x_start + math.ceil((i - 1) / 2) * (width + finger_spacing)
         angle = 0
         if i % 2 == 1:
             angle = 180
