@@ -44,7 +44,7 @@ class ChipBuilder:
         if markers:
             self._write_markers_leo()
         self._write_text(text)
-        # self._perform_boolean_operations()
+        self._perform_boolean_operations()
         self._write_file(file_out)
 
         self.frequencies = []
@@ -169,7 +169,7 @@ class ChipBuilder:
                              pya.DPoint(0, focus_width),
                              pya.DPoint(focus_width, 0)])
         focus_trans = pya.ICplxTrans(1, 0, False, 10*marker_width + focus_width, 0)
-        mask_trans = pya.ICplxTrans(40, 0, False, 0, 0)
+        mask_trans = pya.ICplxTrans(30, 0, False, 0, 0)
 
         # top left
         top_left_trans = pya.ICplxTrans(1, 0, False, -self.chip_width / (2 * self.dbu) + x_shift, self.chip_height / (2 * self.dbu) - y_shift)
