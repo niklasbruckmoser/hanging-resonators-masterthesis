@@ -112,7 +112,7 @@ class StraightParams:
 
 class StraightFingersParams:
 
-    def __init__(self, length=100, width=10, gap=6, ground=50, hole=40, n_fingers=4, finger_length=26, finger_end_gap=8, finger_spacing=20, hook_width=5, hook_length=3, hook_unit=1):
+    def __init__(self, length=100, width=10, gap=6, ground=50, hole=40, n_fingers=4, finger_length=26, finger_end_gap=8, finger_spacing=20, hook_width=5, hook_length=3, hook_unit=1, electrode_width=0.5, bridge_width=0.5, bridge_length=1):
         """
         Initializes transmission line parameters.
         :@param cp: Related chip params
@@ -129,6 +129,9 @@ class StraightFingersParams:
         self.hook_width = hook_width
         self.hook_length = hook_length
         self.hook_unit = hook_unit
+        self.electrode_width = electrode_width
+        self.bridge_width = bridge_width
+        self.bridge_length = bridge_length
 
     def end_point(self):
         return Straight.end_point(self.length)
@@ -141,7 +144,8 @@ class StraightFingersParams:
         return {"length": self.length, "width": self.width, "gap": self.gap, "ground": self.ground, "hole": self.hole,
                 "n_fingers": self.n_fingers, "finger_length": self.finger_length, "finger_end_gap": self.finger_end_gap,
                 "finger_spacing": self.finger_spacing, "hook_width": self.hook_width, "hook_length": self.hook_length,
-                "hook_unit": self.hook_unit}
+                "hook_unit": self.hook_unit, "electrode_width": self.electrode_width, "bridge_width": self.bridge_width,
+                "bridge_length": self.bridge_length}
 
 
 class HoleParams:
@@ -206,7 +210,8 @@ class HangingResonatorParams:
 class HangingResonatorFingersParams:
 
     def __init__(self, segment_length, length, x_offset, y_offset, q_ext, coupling_ground, radius, shorted, width_tl,
-                 gap_tl, width, gap, ground, hole, n_fingers, finger_length, finger_end_gap, finger_spacing, hook_width, hook_length, hook_unit):
+                 gap_tl, width, gap, ground, hole, n_fingers, finger_length, finger_end_gap, finger_spacing, hook_width,
+                 hook_length, hook_unit, electrode_width, bridge_width, bridge_length):
 
         self.segment_length = segment_length
         self.length = length
@@ -229,6 +234,9 @@ class HangingResonatorFingersParams:
         self.hook_width = hook_width
         self.hook_length = hook_length
         self.hook_unit = hook_unit
+        self.electrode_width = electrode_width
+        self.bridge_width = bridge_width
+        self.bridge_length = bridge_length
 
     def as_list(self):
         """
@@ -242,4 +250,5 @@ class HangingResonatorFingersParams:
                 "ground": self.ground, "hdHole": self.hole, "n_fingers": self.n_fingers,
                 "finger_length": self.finger_length, "finger_end_gap": self.finger_end_gap,
                 "finger_spacing": self.finger_spacing, "hook_width": self.hook_width, "hook_length": self.hook_length,
-                "hook_unit": self.hook_unit}
+                "hook_unit": self.hook_unit, "electrode_width": self.electrode_width, "bridge_width": self.bridge_width,
+                "bridge_length": self.bridge_length}

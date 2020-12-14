@@ -333,7 +333,7 @@ class ChipBuilder:
     def res_fingers_params(self, f_start, f_end, amount_resonators=11, segment_length=950, x_offset=950, y_offset=300,
                           q_ext=1e5, coupling_ground=10, radius=100, shorted=1, width_tl=10, gap_tl=6, width=10, gap=6,
                           ground=50, hole=40, n_fingers=20, finger_length=20, finger_end_gap=6, finger_spacing=20,
-                          hook_width=5, hook_length=2, hook_unit=1):
+                          hook_width=5, hook_length=2, hook_unit=1, electrode_width=0.3, bridge_width=0.4, bridge_length=1):
         """
         generate a list of resonator params for given parameters
         @return: a list containing ResonatorParams
@@ -347,6 +347,7 @@ class ChipBuilder:
             params.append(HangingResonatorFingersParams(segment_length, length, x_offset, y_offset, q_ext,
                                                         coupling_ground, radius, shorted, width_tl, gap_tl, width, gap,
                                                         ground, hole, n_fingers, finger_length, finger_end_gap,
-                                                        finger_spacing, hook_width, hook_length, hook_unit))
+                                                        finger_spacing, hook_width, hook_length, hook_unit,
+                                                        electrode_width, bridge_width, bridge_length))
 
         return params

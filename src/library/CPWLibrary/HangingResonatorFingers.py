@@ -43,6 +43,9 @@ class HangingResonatorFingers(pya.PCellDeclarationHelper):
         self.param("hook_width", self.TypeDouble, "hook width", default=5)
         self.param("hook_length", self.TypeDouble, "hook length", default=2.5)
         self.param("hook_unit", self.TypeDouble, "hook unit", default=1)
+        self.param("electrode_width", self.TypeDouble, "electrode width", default=0.5)
+        self.param("bridge_width", self.TypeDouble, "bridge width", default=0.5)
+        self.param("bridge_length", self.TypeDouble, "bridge length", default=1)
 
     def display_text_impl(self):
         # Provide a descriptive text for the cell
@@ -75,16 +78,19 @@ class HangingResonatorFingers(pya.PCellDeclarationHelper):
         hook_width = self.hook_width / dbu
         hook_length = self.hook_length / dbu
         hook_unit = self.hook_unit / dbu
+        electrode_width = self.electrode_width / dbu
+        bridge_width = self.bridge_width / dbu
+        bridge_length = self.bridge_length / dbu
 
         # create shape
         create_res_fingers(self, pya.DPoint(0, 0), 0, segment_length, length, x_offset, y_offset, q_ext,
                            coupling_ground, radius, shorted, width_tl, gap_tl, width, gap, ground, hole, self.n_fingers,
-                           finger_length, finger_end_gap, finger_spacing, hook_width, hook_length, hook_unit)
+                           finger_length, finger_end_gap, finger_spacing, hook_width, hook_length, hook_unit, electrode_width, bridge_width, bridge_length)
 
 
 def create_res_fingers(obj, start, rotation, segment_length, length, x_offset, y_offset, q_ext, coupling_ground, radius,
                        shorted, width_tl, gap_tl, width, gap, ground, hole, n_fingers, finger_length, finger_end_gap,
-                       finger_spacing, hook_width, hook_length, hook_unit):
+                       finger_spacing, hook_width, hook_length, hook_unit, electrode_width, bridge_width, bridge_length):
     odd = False
     if n_fingers % 2 == 1:
         odd = True
@@ -103,7 +109,7 @@ def create_res_fingers(obj, start, rotation, segment_length, length, x_offset, y
 
     if length < y_offset:
         curr = create_straight_fingers(obj, curr, 90+rotation, length, width, gap, ground, hole, n_fingers, finger_length, finger_end_gap, finger_spacing, hook_width, hook_length, hook_unit)
-        create_end(obj, curr, 90+rotation, shorted, width, gap, ground, hole)
+        create_end(obj, curr, 90+rotation, shorted, width, gap, ground, hole, electrode_width, bridge_width, bridge_length)
         return
     curr = create_straight(obj, curr, 90+rotation, y_offset, width, gap, ground, hole)
     length -= y_offset
@@ -145,8 +151,8 @@ def create_res_fingers(obj, start, rotation, segment_length, length, x_offset, y
                 length -= np.pi / 180 * radius * 90
                 curr = create_straight(obj, curr, 90 + rotation, length - straight_finger_length, width, gap, ground, hole)
                 length -= length - straight_finger_length
-                curr = create_straight_fingers(obj, curr, 90 + rotation, straight_finger_length, width, gap, ground, hole, n_fingers, finger_length, finger_end_gap, finger_spacing, hook_width, hook_length, hook_unit)
-                create_end_hooks(obj, curr, 90 + rotation, width, gap, ground, hole, odd, finger_end_gap, hook_width, hook_length, hook_unit)
+                curr = create_straight_fingers(obj, curr, 90 + rotation, straight_finger_length, width, gap, ground, hole, n_fingers, finger_length, finger_end_gap, finger_spacing, hook_width, hook_length, hook_unit, electrode_width, bridge_width, bridge_length)
+                create_end_hooks(obj, curr, 90 + rotation, width, gap, ground, hole, odd, finger_end_gap, hook_width, hook_length, hook_unit, electrode_width, bridge_width, bridge_length)
                 return
             else:
                 curr = create_straight(obj, curr, rotation if right is True else 180 + rotation, last_straight_length, width, gap, ground, hole)
@@ -154,8 +160,8 @@ def create_res_fingers(obj, start, rotation, segment_length, length, x_offset, y
                 right = not right
                 curr = create_curve(obj, curr, 180+rotation if right is True else rotation, radius, 90, right, width, gap, ground, hole)
                 length -= np.pi / 180 * radius * 90
-                curr = create_straight_fingers(obj, curr, 90+rotation, straight_finger_length, width, gap, ground, hole, n_fingers, finger_length, finger_end_gap, finger_spacing, hook_width, hook_length, hook_unit)
-                create_end_hooks(obj, curr, 90 + rotation, width, gap, ground, hole, odd, finger_end_gap, hook_width, hook_length, hook_unit)
+                curr = create_straight_fingers(obj, curr, 90+rotation, straight_finger_length, width, gap, ground, hole, n_fingers, finger_length, finger_end_gap, finger_spacing, hook_width, hook_length, hook_unit, electrode_width, bridge_width, bridge_length)
+                create_end_hooks(obj, curr, 90 + rotation, width, gap, ground, hole, odd, finger_end_gap, hook_width, hook_length, hook_unit, electrode_width, bridge_width, bridge_length)
                 return
         curr = create_straight(obj, curr, rotation if right is True else 180+rotation, segment_length, width, gap, ground, hole)
         length -= segment_length
