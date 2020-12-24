@@ -74,7 +74,9 @@ def create_smooth_port(obj, start, length_taper, length_port, width_port, spacin
 
     x_offset = hole + ground + gap_max + length_port
 
-    for z in np.linspace(0, 1, 100):
+    res = 50
+
+    for z in np.linspace(0, 1, res):
         h_w = get_height(z)*(width_port-width_cpw)/2+width_cpw/2
         h_g = get_gap(2*h_w*dbu) / dbu
 
@@ -82,7 +84,7 @@ def create_smooth_port(obj, start, length_taper, length_port, width_port, spacin
         mask_list.append(pya.DPoint(x_offset + z * length_taper, h_w + h_g + ground))
         gap_list.append(pya.DPoint(x_offset + z * length_taper, h_w + h_g))
 
-    for z in np.linspace(1, 0, 100):
+    for z in np.linspace(1, 0, res):
         h_w = get_height(z)*(width_port-width_cpw)/2+width_cpw/2
         h_g = get_gap(2*h_w*dbu) / dbu
 
@@ -97,14 +99,14 @@ def create_smooth_port(obj, start, length_taper, length_port, width_port, spacin
     hole_list.append(pya.DPoint(hole, -(width_port/2+gap_max+ground)))
     gap_list.append(pya.DPoint(hole+ground+gap_max, -width_port/2))
 
-    for z in np.linspace(0, 1, 100):
+    for z in np.linspace(0, 1, res):
         h_w = get_height(z)*(width_port-width_cpw)/2+width_cpw/2
         h_g = get_gap(2*h_w*dbu) / dbu
 
         hole_list.append(pya.DPoint(x_offset + z * length_taper, -(h_w + h_g + ground)))
         gap_list.append(pya.DPoint(x_offset + z * length_taper, -h_w))
 
-    for z in np.linspace(1, 0, 100):
+    for z in np.linspace(1, 0, res):
         h_w = get_height(z)*(width_port-width_cpw)/2+width_cpw/2
         h_g = get_gap(2*h_w*dbu) / dbu
 

@@ -57,6 +57,8 @@ def create_curve(obj, start, rotation, radius, angle, right_curve, width, gap, g
     # min radius check
     # radius = max(radius, width/2+gap+ground+hole)
 
+    res = 90
+
     # define outer radius as the full circle to the upper hd hole mask
     outer_radius = radius + width/2 + gap + ground + hole
 
@@ -68,7 +70,7 @@ def create_curve(obj, start, rotation, radius, angle, right_curve, width, gap, g
 
     mag = radius
 
-    for phi in np.linspace(0, angle, 100):
+    for phi in np.linspace(0, angle, res):
 
         ux = np.sin(phi*np.pi/180)
         uy = np.cos(phi*np.pi/180)
@@ -85,7 +87,7 @@ def create_curve(obj, start, rotation, radius, angle, right_curve, width, gap, g
     p_gl = p_gl-gap
     p_hl = p_hl-hole
 
-    for phi in np.linspace(angle, 0, 100):
+    for phi in np.linspace(angle, 0, res):
 
         ux = np.sin(phi*np.pi/180)
         uy = np.cos(phi*np.pi/180)
