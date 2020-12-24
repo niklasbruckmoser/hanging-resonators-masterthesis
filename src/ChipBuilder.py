@@ -25,13 +25,14 @@ class ChipBuilder:
         self.top = None
         self.dbu = None
 
-    def create_chip(self, file_out, res_params, text=None, markers=False, hole_mask=True):
+    def create_chip(self, file_out, res_params, text=None, markers=False, hole_mask="hole_mask_50-10"):
         """
         Creates a chip from the blueprint in the given frequency range and saves it automatically as a .gds file.
         @param file_out: file name of the .gds file
         @param res_params: list of ResonatorParams, see @CellParams
         @param text: Written text on the chip. Supports \n
         @param markers: if True, writes nb5 markers onto the layout
+        @param hole_mask: if True, writes hole mask onto the layout
         """
         print("Creating chip " + file_out + "...")
 
@@ -39,8 +40,8 @@ class ChipBuilder:
         self.top = self.lay.create_cell("TOP")
         self.dbu = self.lay.dbu
 
-        if hole_mask:
-            self._write_fast_holes()
+        if hole_mask is not False:
+            self._write_fast_holes(hole_mask)
         self._write_structures(res_params)
         self._write_logos()
         if markers:
@@ -111,7 +112,7 @@ class ChipBuilder:
 
             up = not up
 
-    def _write_fast_holes(self):
+    def _write_fast_holes(self, name):
         """
         Subroutine for writing the logos on the chip.
         """
@@ -119,7 +120,7 @@ class ChipBuilder:
 
         # hole files
         # TODO: auto generate if not existent?
-        self.lay.read("../templates/hole_mask_50-10.gds")
+        self.lay.read("../templates/" + name + ".gds")
 
         cell = self.lay.cell_by_name("HOLE")
         trans = pya.DCplxTrans.new(1, 0, False, 0, 0)
@@ -298,7 +299,8 @@ class ChipBuilder:
         self.lay.clear_layer(l12)
         self.lay.clear_layer(l13)
 
-        self.top.shapes(l3).insert(pya.Box(-5000/self.dbu, -3000/self.dbu, 5000/self.dbu, 3000/self.dbu))
+        self.top.shapes(l3).insert(pya.Box(-self.chip_width/2/self.dbu, -self.chip_height/2/self.dbu,
+                                           self.chip_width/2/self.dbu, self.chip_height/2/self.dbu))
         processor.boolean(self.lay, self.top, l3, self.lay, self.top, l1, self.top.shapes(l1),
                           pya.EdgeProcessor.ModeAnd, True, True, True)
 
