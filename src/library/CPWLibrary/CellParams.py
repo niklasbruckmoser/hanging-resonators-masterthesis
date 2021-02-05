@@ -252,3 +252,41 @@ class HangingResonatorFingersParams:
                 "finger_spacing": self.finger_spacing, "hook_width": self.hook_width, "hook_length": self.hook_length,
                 "hook_unit": self.hook_unit, "electrode_width": self.electrode_width, "bridge_width": self.bridge_width,
                 "bridge_length": self.bridge_length}
+
+#Add Box here
+class HangingResonatorBoxParams:
+
+    def __init__(self, segment_length, length, x_offset, y_offset, q_ext, coupling_ground, radius, shorted, width_tl,
+                 gap_tl, width, gap, ground, hole, lengthlength,widthwidth, electrode_width, bridge_width, bridge_length):
+
+        self.segment_length = segment_length
+        self.length = length
+        self.x_offset = x_offset
+        self.y_offset = y_offset
+        self.q_ext = q_ext
+        self.coupling_ground = coupling_ground
+        self.radius = radius
+        self.shorted = shorted
+        self.width_tl = width_tl
+        self.gap_tl = gap_tl
+        self.width = width
+        self.gap = gap
+        self.ground = ground
+        self.hole = hole
+        self.lengthlength = lengthlength
+        self.widthwidth = widthwidth
+        self.electrode_width = electrode_width
+        self.bridge_width = bridge_width
+        self.bridge_length = bridge_length
+
+    def as_list(self):
+        """
+        Returns a param dictionary for creating KLayout cells
+        :@return: a dictionary containing all parameters
+        """
+        return {"segment_length": self.segment_length, "length": self.length,
+                "x_offset": self.x_offset, "y_offset": self.y_offset, "q_ext": self.q_ext,
+                "coupling_ground": self.coupling_ground, "radius": self.radius, "shorted": self.shorted,
+                "width_tl": self.width_tl, "gap_tl": self.gap_tl, "width": self.width, "gap": self.gap,
+                "ground": self.ground, "hdHole": self.hole,"lengthlength":self.lengthlength,"widthwidth":self.widthwidth, "electrode_width": self.electrode_width, "bridge_width": self.bridge_width,
+                "bridge_length": self.bridge_length}

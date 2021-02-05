@@ -26,6 +26,7 @@ class ChipBuilder:
         self.dbu = None
 
     def create_chip(self, file_out, res_params, text=None, markers=False, hole_mask="hole_mask_50-10"):
+        print(res_params)
         """
         Creates a chip from the blueprint in the given frequency range and saves it automatically as a .gds file.
         @param file_out: file name of the .gds file
@@ -69,7 +70,7 @@ class ChipBuilder:
         port_len = port_params.end_point().x
         x_prog += port_len
 
-        tl_len = self.chip_width - 2*port_len
+        tl_len = self.chip_width - 2*port_len#self.chip_width - 2*port_len
 
         straight_params = StraightParams(tl_len, 10, 6, 50, 40)
         straight = self.lay.create_cell("Straight", "QC", straight_params.as_list())
@@ -105,8 +106,10 @@ class ChipBuilder:
             x_prog += safe_zone/2
             if type(res) == HangingResonatorParams:
                 res_cell = self.lay.create_cell("HangingResonator", "QC", res.as_list())
-            else:
+            elif type(res) == HangingResonatorFingersParams:
                 res_cell = self.lay.create_cell("HangingResonatorFingers", "QC", res.as_list())
+            else :
+                res_cell = self.lay.create_cell("HangingResonatorBox", "QC", res.as_list())
             trans = pya.DCplxTrans.new(1, 0, not up, x_prog, 0)
             self.top.insert(pya.DCellInstArray(res_cell.cell_index(), trans))
 
@@ -120,7 +123,7 @@ class ChipBuilder:
 
         # hole files
         # TODO: auto generate if not existent?
-        self.lay.read("../templates/" + name + ".gds")
+        self.lay.read("../templates/" + name + ".gds")#changed from "templates/" + name + ".gds"
 
         cell = self.lay.cell_by_name("HOLE")
         trans = pya.DCplxTrans.new(1, 0, False, 0, 0)
@@ -299,10 +302,13 @@ class ChipBuilder:
         self.lay.clear_layer(l12)
         self.lay.clear_layer(l13)
 
+
         self.top.shapes(l3).insert(pya.Box(-self.chip_width/2/self.dbu, -self.chip_height/2/self.dbu,
-                                           self.chip_width/2/self.dbu, self.chip_height/2/self.dbu))
+                                          self.chip_width/2/self.dbu, self.chip_height/2/self.dbu))
         processor.boolean(self.lay, self.top, l3, self.lay, self.top, l1, self.top.shapes(l1),
                           pya.EdgeProcessor.ModeAnd, True, True, True)
+
+
 
     def _write_file(self, file_out):
         """
@@ -353,3 +359,26 @@ class ChipBuilder:
                                                         electrode_width, bridge_width, bridge_length))
 
         return params
+
+
+    def res_box_params(self, f_start, f_end, amount_resonators=5, segment_length=950, x_offset=950, y_offset=300,
+                          q_ext=1e5, coupling_ground=10, radius=100, shorted=1, width_tl=10, gap_tl=6, width=10, gap=6,
+                          ground=50, hole=40, lengthlength = 250,widthwidth = 250, electrode_width=0.3, bridge_width=0.4, bridge_length=1):
+        """
+        generate a list of resonator params for given parameters
+        @return: a list containing ResonatorParams
+        """
+        params = []
+
+
+        interval = (f_end - f_start) / (amount_resonators - 1)
+        for i in range(amount_resonators):
+            f0 = f_start + i*interval
+            length = HangingResonator.calc_length(f0) / 1000
+            params.append(HangingResonatorBoxParams(segment_length, length, x_offset, y_offset, q_ext,
+                                                        coupling_ground, radius, shorted, width_tl, gap_tl, width, gap,
+                                                        ground, hole, lengthlength,widthwidth,
+                                                        electrode_width, bridge_width, bridge_length))
+
+        return params
+

@@ -7,6 +7,7 @@ from src.library.CPWLibrary.Hole import *
 from src.library.CPWLibrary.HangingResonator import *
 from src.library.CPWLibrary.StraightFingers import *
 from src.library.CPWLibrary.HangingResonatorFingers import *
+from src.library.CPWLibrary.HangingResonatorBox import *
 from src.library.CPWLibrary.EndHooks import *
 
 
@@ -26,6 +27,7 @@ class Main(pya.Library):
         self.layout().register_pcell("HangingResonator", HangingResonator())
         self.layout().register_pcell("StraightFingers", StraightFingers())
         self.layout().register_pcell("HangingResonatorFingers", HangingResonatorFingers())
+        self.layout().register_pcell("HangingResonatorBox", HangingResonatorBox())
         self.layout().register_pcell("EndHooks", EndHooks())
 
         self.register("QC")

@@ -181,7 +181,7 @@ def fixed_point_poly(xf, yf):
     vec[:n + 1] = yx_n
     vec[n + 1:] = yf
     params = np.linalg.solve(mat, vec)
-    return params[:n + 1]
+    return [-7.85089029e-02, 6.14368328e-01, -6.99500118e-04, 4.77563314e-06]#params[:n + 1]
 
 
 def end_point(length_taper, length_port, width_port, spacing, width_cpw, gap_cpw, ground, hole):
