@@ -1,5 +1,4 @@
 import klayout.db as pya
-import src.library.CPWLib as cpwLib
 import src.library.CPWLibrary.Curve as Curve
 import src.library.CPWLibrary.Straight as Straight
 import src.library.CPWLibrary.Port as Port
