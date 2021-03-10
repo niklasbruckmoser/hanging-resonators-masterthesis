@@ -3,8 +3,6 @@ from pathlib import Path
 import numpy as np
 
 import src.library.CPWLibrary.HangingResonator as HangingResonator
-# import src.library.CPW_pieces
-# import src.library.CPWLib
 import src.library.CPWLibrary.Main
 import src.library.TextGen as TextGen
 from src.library.CPWLibrary.CellParams import *
@@ -320,8 +318,24 @@ class ChipBuilder:
                    q_ext=1e5, coupling_ground=10, radius=100, shorted=1, width_tl=10, gap_tl=6, width=10, gap=6,
                    ground=50, hole=40):
         """
-        generate a list of resonator params for given parameters
-        @return: a list containing ResonatorParams
+        generate a list of resonator params for given parameters that are equally frequency-spaced
+        @param f_start: start frequency
+        @param f_end: end frequency
+        @param amount_resonators: amount of resonators
+        @param segment_length: x length of the straight
+        @param x_offset: initial x offset (typically same as segment_length, not optimized for different lengths)
+        @param y_offset: initial y offset
+        @param q_ext: external coupling factor
+        @param coupling_ground: distance from TL to resonator
+        @param radius: meander radius (should be > 10*width)
+        @param shorted: 1 = lambda/4, 0 = lambda/2 resonator
+        @param width_tl: width of the TL (needed for q_ext calculation)
+        @param gap_tl: gap of the TL (needed for q_ext calculation)
+        @param width: width of the resonator
+        @param gap: gap of the resonator
+        @param ground: distance from gap to high density holes
+        @param hole: width of high density holes
+        @return: ResonatorParams for each resonator in a list
         """
         params = []
 

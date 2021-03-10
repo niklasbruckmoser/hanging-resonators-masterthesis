@@ -1,104 +1,50 @@
-from src.Blueprint import *
 from src.WaferBuilder import *
+from src.ChipBuilder import *
 
 """
-example script for creating 54 chips and a wafer containing all of them once
+Tutorial for the Hanging Resonators Project
+v2 03/2021
 """
 
 
-def name():
-    return w_name + "-" + str(res_id)
+# instantinate a chipbuilder that creates 10x6mm chips and has a transmission line width of 10µm and a gap of 6µm
+# distance from the gap to the high density holes (ground) = 50µm, high density hole width (hole) = 40µm
+cb = ChipBuilder(chip_width=10000, chip_height=6000, width=10, gap=6, ground=50, hole=40)
 
+# ---
 
-def next_name():
-    global res_id
-    res_id += 1
-    return name()
+# create a list of resonator parameters: 11 equally frequency-spaced resonators from 4 to 6 GHz with an external
+# coupling of roughly 1e6
+resonator_params = cb.res_params(f_start=4, f_end=6, amount_resonators=11, q_ext=1e6)
 
+# create a chip with the given resonator parameters and save it in wd/chips/
+cb.create_chip(file_out="Batch1-1", res_params=resonator_params, text="Text on the chip\nResonators from 4 to 6 GHz",
+               markers=True, hole_mask="hole_mask_small")
+# ---
 
-w_name = "WaferName"
-res_id = 0
+# we can also re-use the chip builder and use different (or no) resonator params
+cb.create_chip(file_out="Batch1-2", res_params=[], text="Transmission Line only", hole_mask=False)
 
+# ---
 
-bp = Blueprint(res_coupling_ground=7, silver_glue_port=False, port_spacing=200, res_segment_w=750)
-bpf = Blueprint(res_coupling_ground=7, silver_glue_port=False, port_spacing=200, res_fingers=8)
+# instead of creating the resonator params with the cb.res_params method (see line 16), we can also create our own
+params_resonator_1 = HangingResonatorParams(950, 7000, 950, 300, 1e6, 10, 100, 1, 10, 6, 10, 6, 50, 40)
+params_resonator_2 = HangingResonatorParams(950, 6500, 950, 300, 1e6, 10, 100, 1, 10, 6, 20, 12, 50, 40)
 
+# create a chip with our two resonators we have defined above with the given params
+cb.create_chip(file_out="Batch1-3", res_params=[params_resonator_1, params_resonator_2], text="Two Resonators")
 
-bp.create_chip(next_name(), 4, 5, printed_text=name())
-bp.create_chip(next_name(), 4, 5, printed_text=name())
-bp.create_chip(next_name(), 4, 5, printed_text=name())
+# ---
 
-bpf.create_chip(next_name(), 4, 5, printed_text=name(), markers=True)
-bpf.create_chip(next_name(), 4, 5, printed_text=name(), markers=True)
-bpf.create_chip(next_name(), 4, 5, printed_text=name(), markers=True)
+# We can now put our chips onto a wafer
+wafer = WaferBuilder(spacing_x=10000, spacing_y=6000)
 
-bp.create_chip(next_name(), 5, 6, printed_text=name())
-bp.create_chip(next_name(), 5, 6, printed_text=name())
-bp.create_chip(next_name(), 5, 6, printed_text=name())
+# load all chips from a given folder with a given prefix, include every design 5 times
+chip_list = wafer.load_prefixed_chips("../chips", "Batch1", amount=5)
 
-bp.create_chip(next_name(), 6, 7, printed_text=name())
-bp.create_chip(next_name(), 6, 7, printed_text=name())
-bp.create_chip(next_name(), 6, 7, printed_text=name())
-
-bp.create_chip(next_name(), 7, 8, printed_text=name())
-bp.create_chip(next_name(), 7, 8, printed_text=name())
-bp.create_chip(next_name(), 7, 8, printed_text=name())
-
-bp.create_chip(next_name(), 8, 9, printed_text=name())
-bp.create_chip(next_name(), 8, 9, printed_text=name())
-bp.create_chip(next_name(), 8, 9, printed_text=name())
-
-bp.create_chip(next_name(), 4, 6, printed_text=name())
-bp.create_chip(next_name(), 4, 6, printed_text=name())
-bp.create_chip(next_name(), 4, 6, printed_text=name())
-
-bp.create_chip(next_name(), 6, 8, printed_text=name())
-bp.create_chip(next_name(), 6, 8, printed_text=name())
-bp.create_chip(next_name(), 6, 8, printed_text=name())
-
-bp.create_chip(next_name(), 6, 6.1, printed_text=name())
-bp.create_chip(next_name(), 6, 6.1, printed_text=name())
-bp.create_chip(next_name(), 6, 6.1, printed_text=name())
-
-bp.create_chip(next_name(), 6.1, 6.2, printed_text=name())
-bp.create_chip(next_name(), 6.1, 6.2, printed_text=name())
-bp.create_chip(next_name(), 6.1, 6.2, printed_text=name())
-
-bp.create_chip(next_name(), 6.2, 6.3, printed_text=name())
-bp.create_chip(next_name(), 6.2, 6.3, printed_text=name())
-bp.create_chip(next_name(), 6.2, 6.3, printed_text=name())
-
-bp.create_chip(next_name(), 6.3, 6.4, printed_text=name())
-bp.create_chip(next_name(), 6.3, 6.4, printed_text=name())
-bp.create_chip(next_name(), 6.3, 6.4, printed_text=name())
-
-bp.create_chip(next_name(), 6.4, 6.5, printed_text=name())
-bp.create_chip(next_name(), 6.4, 6.5, printed_text=name())
-bp.create_chip(next_name(), 6.4, 6.5, printed_text=name())
-
-bp.create_chip(next_name(), 6.5, 6.6, printed_text=name())
-bp.create_chip(next_name(), 6.5, 6.6, printed_text=name())
-bp.create_chip(next_name(), 6.5, 6.6, printed_text=name())
-
-bp.create_chip(next_name(), 6.6, 6.7, printed_text=name())
-bp.create_chip(next_name(), 6.6, 6.7, printed_text=name())
-bp.create_chip(next_name(), 6.6, 6.7, printed_text=name())
-
-bp.create_chip(next_name(), 6.7, 6.8, printed_text=name())
-bp.create_chip(next_name(), 6.7, 6.8, printed_text=name())
-bp.create_chip(next_name(), 6.7, 6.8, printed_text=name())
-
-bp.create_chip(next_name(), 6.8, 6.9, printed_text=name())
-bp.create_chip(next_name(), 6.8, 6.9, printed_text=name())
-bp.create_chip(next_name(), 6.8, 6.9, printed_text=name())
-
-bp.create_chip(next_name(), 6.9, 7, printed_text=name())
-bp.create_chip(next_name(), 6.9, 7, printed_text=name())
-bp.create_chip(next_name(), 6.9, 7, printed_text=name())
-
-
-wafer = WaferBuilder(spacing_x=9900, spacing_y=5900)
-chip_list = wafer.load_prefixed_chips("../chips", w_name, 1)
-# sorting by chip ID
+# sorting the chips by number (relevant if one wants to have a defined order on the wafer)
 chip_list = sorted(chip_list, key=lambda x: int(x[0].split("-")[1]))
-wafer.create_wafer("WaferLayout-" + w_name, chip_list)
+
+# create the wafer and save it in wd/wafers/
+wafer.create_wafer("WaferLayout", chip_list)
+

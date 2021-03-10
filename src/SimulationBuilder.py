@@ -3,7 +3,6 @@ import numpy as np
 # import src.library.CPWLib
 import src.library.CPWLibrary.Main
 import src.library.TextGen as TextGen
-import src.library.CPW_pieces
 import src.library.CPWLibrary.HangingResonator as HangingResonator
 from pathlib import Path
 from src.library.CPWLibrary.CellParams import *
