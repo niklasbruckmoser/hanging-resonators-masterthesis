@@ -139,7 +139,7 @@ class ChipBuilder:
 
         # logo files
         self.lay.read("../templates/logo_mcqst.gds")
-        self.lay.read("../templates/logo_wmi.gds")
+        self.lay.read("../templates/logo_wmi_new.gds")
 
         cell_mcqst = self.lay.cell_by_name("MCQST")
         trans = pya.DCplxTrans.new(size_multiplier, 0, False, self.chip_width / 2 - logo_spacing - 550,
