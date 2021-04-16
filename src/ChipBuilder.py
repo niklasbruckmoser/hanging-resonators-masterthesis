@@ -61,7 +61,8 @@ class ChipBuilder:
 
         x_prog = -self.chip_width/2
         # Transmission line
-        port_params = PortParams(130, 200, 400, -300, 10, 6, 50, 40)
+        # port_params = PortParams(130, 200, 400, -300, 10, 6, 50, 40)
+        port_params = PortParams(160, 200, 300, 0, 10, 6, 50, 40)
         port = self.lay.create_cell("Port", "QC", port_params.as_list())
         trans = pya.DCplxTrans.new(1, 0, False, x_prog, 0)
         self.top.insert(pya.DCellInstArray(port.cell_index(), trans))
