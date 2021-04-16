@@ -7,7 +7,7 @@ import os
 
 class WaferBuilder:
 
-    def __init__(self, wafer_diameter=100000, spacing_x=10000, spacing_y=6000):
+    def __init__(self, wafer_diameter=100000, spacing_x=10000, spacing_y=6000, x_constraint=None):
         """
         Initializes a WaferBuilder object, which can be used for generating wafers.
         @param wafer_diameter: Diameter of the wafer; by default 4 inch wafer
@@ -41,6 +41,15 @@ class WaferBuilder:
                 if (x**2 + y**2) > (wafer_diameter/2*fill_factor)**2:
                     continue
                 self.chip_positions.append((x, y))
+
+        if x_constraint is not None:
+            new_pos = []
+            for pos in self.chip_positions:
+                if x_constraint > 0 and pos.x > 0:
+                    new_pos.append(pos)
+                if x_constraint < 0 and pos.x < 0:
+                    new_pos.append(pos)
+
 
         # sort chip positions by ascending distance from origin
         self.chip_positions.sort(key=lambda r: r[0]**2+r[1]**2)
