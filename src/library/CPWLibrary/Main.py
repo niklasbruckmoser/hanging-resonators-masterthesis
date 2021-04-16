@@ -8,6 +8,7 @@ from src.library.CPWLibrary.HangingResonator import *
 from src.library.CPWLibrary.StraightFingers import *
 from src.library.CPWLibrary.HangingResonatorFingers import *
 from src.library.CPWLibrary.EndHooks import *
+from src.library.CPWLibrary.Hallbar import *
 
 
 class Main(pya.Library):
@@ -27,6 +28,7 @@ class Main(pya.Library):
         self.layout().register_pcell("StraightFingers", StraightFingers())
         self.layout().register_pcell("HangingResonatorFingers", HangingResonatorFingers())
         self.layout().register_pcell("EndHooks", EndHooks())
+        self.layout().register_pcell("Hallbar", Hallbar())
 
         self.register("QC")
 
