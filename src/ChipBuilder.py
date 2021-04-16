@@ -43,10 +43,16 @@ class ChipBuilder:
 
         if hole_mask is not False:
             self._write_fast_holes(hole_mask)
+
+        #for empty
+
         self._write_structures(res_params)
+
         self._write_logos()
+
         if markers:
             self._write_markers_leo()
+
         self._write_text(text)
         self._perform_boolean_operations()
         self._write_file(file_out)
@@ -145,12 +151,12 @@ class ChipBuilder:
         self.lay.read("../templates/logo_wmi.gds")
 
         cell_mcqst = self.lay.cell_by_name("MCQST")
-        trans = pya.DCplxTrans.new(size_multiplier, 0, False, self.chip_width / 2 - logo_spacing - 550,
+        trans = pya.DCplxTrans.new(size_multiplier, 0, False, self.chip_width / 2 - logo_spacing - 1000,
                                    self.chip_height / 2 - logo_spacing - 325)
         self.top.insert(pya.DCellInstArray(cell_mcqst, trans))
 
         cell_wmi = self.lay.cell_by_name("WMI")
-        trans = pya.DCplxTrans.new(size_multiplier, 0, False, -(self.chip_width / 2 - logo_spacing - 550),
+        trans = pya.DCplxTrans.new(size_multiplier, 0, False, -(self.chip_width / 2 - logo_spacing - 1000),
                                    self.chip_height / 2 - logo_spacing - 325)
         self.top.insert(pya.DCellInstArray(cell_wmi, trans))
 
@@ -164,7 +170,10 @@ class ChipBuilder:
 
         marker_width = 10 / self.dbu
         focus_width = 20 / self.dbu
-        x_shift = 1015 / self.dbu - marker_width
+        # Gerhard was here
+        #x_shift = 1015 / self.dbu - marker_width
+        x_shift = 515 /self.dbu - marker_width
+
         y_shift = x_shift
         marker = pya.Box(-marker_width/2, -marker_width/2,
                          marker_width/2, marker_width/2)
@@ -200,6 +209,47 @@ class ChipBuilder:
         self.top.shapes(l0).insert(focus.transformed(bottom_right_trans * focus_trans))
         self.top.shapes(l2).insert(marker.transformed(bottom_right_trans * focus_trans * mask_trans))
 
+        x_shift = 1015 / self.dbu - marker_width
+
+        y_shift = x_shift
+        marker = pya.Box(-marker_width / 2, -marker_width / 2,
+                         marker_width / 2, marker_width / 2)
+        focus = pya.Polygon([pya.DPoint(-focus_width, 0),
+                             pya.DPoint(0, -focus_width),
+                             pya.DPoint(0, focus_width),
+                             pya.DPoint(focus_width, 0)])
+        focus_trans = pya.ICplxTrans(1, 0, False, 10 * marker_width + focus_width, 0)
+        mask_trans = pya.ICplxTrans(30, 0, False, 0, 0)
+
+        # top left
+        top_left_trans = pya.ICplxTrans(1, 0, False, -self.chip_width / (2 * self.dbu) + x_shift,
+                                        self.chip_height / (2 * self.dbu) - y_shift)
+        self.top.shapes(l0).insert(marker.transformed(top_left_trans))
+        self.top.shapes(l2).insert(marker.transformed(top_left_trans * mask_trans))
+        self.top.shapes(l0).insert(focus.transformed(top_left_trans * focus_trans))
+        self.top.shapes(l2).insert(marker.transformed(top_left_trans * focus_trans * mask_trans))
+        # top right
+        top_right_trans = pya.ICplxTrans(1, 0, False, self.chip_width / (2 * self.dbu) - x_shift,
+                                         self.chip_height / (2 * self.dbu) - y_shift)
+        self.top.shapes(l0).insert(marker.transformed(top_right_trans))
+        self.top.shapes(l2).insert(marker.transformed(top_right_trans * mask_trans))
+        self.top.shapes(l0).insert(focus.transformed(top_right_trans * focus_trans))
+        self.top.shapes(l2).insert(marker.transformed(top_right_trans * focus_trans * mask_trans))
+        # bottom left
+        bottom_left_trans = pya.ICplxTrans(1, 0, False, -self.chip_width / (2 * self.dbu) + x_shift,
+                                           -self.chip_height / (2 * self.dbu) + y_shift)
+        self.top.shapes(l0).insert(marker.transformed(bottom_left_trans))
+        self.top.shapes(l2).insert(marker.transformed(bottom_left_trans * mask_trans))
+        self.top.shapes(l0).insert(focus.transformed(bottom_left_trans * focus_trans))
+        self.top.shapes(l2).insert(marker.transformed(bottom_left_trans * focus_trans * mask_trans))
+        # bottom right
+        bottom_right_trans = pya.ICplxTrans(1, 0, False, self.chip_width / (2 * self.dbu) - x_shift,
+                                            -self.chip_height / (2 * self.dbu) + y_shift)
+        self.top.shapes(l0).insert(marker.transformed(bottom_right_trans))
+        self.top.shapes(l2).insert(marker.transformed(bottom_right_trans * mask_trans))
+        self.top.shapes(l0).insert(focus.transformed(bottom_right_trans * focus_trans))
+        self.top.shapes(l2).insert(marker.transformed(bottom_right_trans * focus_trans * mask_trans))
+
     def _write_markers(self, inverted=False):
         """
         Subroutine for writing nanobeam markers on the chip
@@ -215,7 +265,7 @@ class ChipBuilder:
         trans = pya.DCplxTrans.new(1, 0, False, 0, 0)
         self.top.insert(pya.DCellInstArray(cell_marker, trans))
 
-    def _write_text(self, text=None, frequencies=True):
+    def _write_text(self, text=None, frequencies=False):
         """
         Subroutine for writing text on the chip.
         :@param text: Text that will be printed on the chip. Set to None for printing the resonance frequencies
@@ -363,7 +413,7 @@ class ChipBuilder:
 
     def res_box_params(self, f_start, f_end, amount_resonators=5, segment_length=950, x_offset=950, y_offset=300,
                           q_ext=1e5, coupling_ground=10, radius=100, shorted=1, width_tl=10, gap_tl=6, width=10, gap=6,
-                          ground=50, hole=40, lengthlength = 250,widthwidth = 250, electrode_width=0.3, bridge_width=0.4, bridge_length=1):
+                          ground=50, hole=40, lengthlength = 250,widthwidth = 250, electrode_width=0.3, bridge_width=0.4, bridge_length=1,length_offset = []):
         """
         generate a list of resonator params for given parameters
         @return: a list containing ResonatorParams
@@ -374,11 +424,17 @@ class ChipBuilder:
         interval = (f_end - f_start) / (amount_resonators - 1)
         for i in range(amount_resonators):
             f0 = f_start + i*interval
+            # add here effective length
+            offset = 0
+            if len(length_offset) > 0:
+                offset = length_offset[i]
+            print('offset',offset)
             length = HangingResonator.calc_length(f0) / 1000
+            print(length)
             params.append(HangingResonatorBoxParams(segment_length, length, x_offset, y_offset, q_ext,
                                                         coupling_ground, radius, shorted, width_tl, gap_tl, width, gap,
                                                         ground, hole, lengthlength,widthwidth,
-                                                        electrode_width, bridge_width, bridge_length))
+                                                        electrode_width, bridge_width, bridge_length,offset = offset))
 
         return params
 
