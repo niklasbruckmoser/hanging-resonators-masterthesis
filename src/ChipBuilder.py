@@ -62,7 +62,7 @@ class ChipBuilder:
         x_prog = -self.chip_width/2
         # Transmission line
         # port_params = PortParams(130, 200, 400, -300, 10, 6, 50, 40)
-        port_params = PortParams(160, 200, 300, 0, 10, 6, 50, 40)
+        port_params = PortParams(160, 200, 300, 0, self.width, self.gap, self.ground, self.hole)
         port = self.lay.create_cell("Port", "QC", port_params.as_list())
         trans = pya.DCplxTrans.new(1, 0, False, x_prog, 0)
         self.top.insert(pya.DCellInstArray(port.cell_index(), trans))
@@ -72,7 +72,7 @@ class ChipBuilder:
 
         tl_len = self.chip_width - 2*port_len
 
-        straight_params = StraightParams(tl_len, 10, 6, 50, 40)
+        straight_params = StraightParams(tl_len, self.width, self.gap, self.ground, self.hole)
         straight = self.lay.create_cell("Straight", "QC", straight_params.as_list())
         trans = pya.DCplxTrans.new(1, 0, False, x_prog, 0)
         self.top.insert(pya.DCellInstArray(straight.cell_index(), trans))
@@ -137,10 +137,12 @@ class ChipBuilder:
 
         size_multiplier = 0.5
         logo_spacing = 150
+        if self.chip_height < 5900:
+            logo_spacing = 50
 
         # logo files
         self.lay.read("../templates/logo_mcqst.gds")
-        self.lay.read("../templates/logo_wmi_new.gds")
+        self.lay.read("../templates/logo_wmi.gds")
 
         cell_mcqst = self.lay.cell_by_name("MCQST")
         trans = pya.DCplxTrans.new(size_multiplier, 0, False, self.chip_width / 2 - logo_spacing - 550,
@@ -317,7 +319,7 @@ class ChipBuilder:
 
     def res_params(self, f_start, f_end, amount_resonators=11, segment_length=950, x_offset=950, y_offset=300,
                    q_ext=1e5, coupling_ground=10, radius=100, shorted=1, width_tl=10, gap_tl=6, width=10, gap=6,
-                   ground=50, hole=40):
+                   ground=10, hole=40):
         """
         generate a list of resonator params for given parameters that are equally frequency-spaced
         @param f_start: start frequency
@@ -351,7 +353,7 @@ class ChipBuilder:
 
     def res_fingers_params(self, f_start, f_end, amount_resonators=11, segment_length=950, x_offset=950, y_offset=300,
                           q_ext=1e5, coupling_ground=10, radius=100, shorted=1, width_tl=10, gap_tl=6, width=10, gap=6,
-                          ground=50, hole=40, n_fingers=20, finger_length=20, finger_end_gap=6, finger_spacing=20,
+                          ground=10, hole=40, n_fingers=20, finger_length=20, finger_end_gap=6, finger_spacing=20,
                           hook_width=5, hook_length=2, hook_unit=1, electrode_width=0.3, bridge_width=0.4, bridge_length=1):
         """
         generate a list of resonator params for given parameters
