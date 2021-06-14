@@ -3,7 +3,7 @@ import numpy as np
 
 class Curve(pya.PCellDeclarationHelper):
     """
-    Coplanar waveguide port
+    Coplanar waveguide curve
     """
 
     def __init__(self):
@@ -117,6 +117,6 @@ def end_point(radius, angle, right_curve, width, gap, ground, hole):
     mag = radius - width/2 - gap - ground - hole
     mag = radius
     shift = pya.ICplxTrans(1, 0, not right_curve, 0, 0)
-    return shift*pya.DPoint(mag*np.sin(angle*np.pi/180), mag*np.cos(angle*np.pi/180)-mag)
+    return pya.DPoint(shift*pya.DPoint(mag*np.sin(angle*np.pi/180), mag*np.cos(angle*np.pi/180)-mag))
 
 

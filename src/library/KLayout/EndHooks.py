@@ -1,10 +1,9 @@
 import klayout.db as pya
-import numpy as np
 
 
 class EndHooks(pya.PCellDeclarationHelper):
     """
-    Coplanar waveguide port
+    End hooks for Nb-Al interface
     """
 
     def __init__(self):
@@ -13,9 +12,6 @@ class EndHooks(pya.PCellDeclarationHelper):
 
 
         # declare the parameters
-        # self.param("l", self.TypeLayer, "Layer", default=pya.LayerInfo(1, 0))
-        # self.param("lm", self.TypeLayer, "LayerMask", default=pya.LayerInfo(10, 0))
-        # self.param("sh", self.TypeShape, "", default=pya.DPoint(0, 0))
         self.param("short", self.TypeInt, "shorted?", default=0)
         self.param("width", self.TypeDouble, "width cpw", default=10)
         self.param("gap", self.TypeDouble, "gap cpw", default=6)

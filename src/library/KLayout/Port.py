@@ -12,9 +12,6 @@ class Port(pya.PCellDeclarationHelper):
         super(Port, self).__init__()
 
         # declare the parameters
-        # self.param("l", self.TypeLayer, "Layer", default=pya.LayerInfo(1, 0))
-        # self.param("lm", self.TypeLayer, "LayerMask", default=pya.LayerInfo(10, 0))
-        # self.param("sh", self.TypeShape, "", default=pya.DPoint(0, 0))
         self.param("length_taper", self.TypeDouble, "taper length", default=300)
         self.param("length_port", self.TypeDouble, "port length", default=200)
         self.param("width_port", self.TypeDouble, "width port", default=140)  # 140

@@ -1,6 +1,7 @@
 import klayout.db as pya
 import numpy as np
 
+
 class Hole(pya.PCellDeclarationHelper):
     """
     Hole pattern

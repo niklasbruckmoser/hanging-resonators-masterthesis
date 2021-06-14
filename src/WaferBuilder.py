@@ -7,12 +7,15 @@ import os
 
 class WaferBuilder:
 
-    def __init__(self, wafer_diameter=100000, spacing_x=10000, spacing_y=6000, x_constraint=None):
+    def __init__(self, wafer_diameter=100000, spacing_x=10000, spacing_y=6000, x_constraint=None, right=True):
         """
         Initializes a WaferBuilder object, which can be used for generating wafers.
         @param wafer_diameter: Diameter of the wafer; by default 4 inch wafer
         @param spacing_x: x spacing of the chip grid
         @param spacing_y: y spacing of the chip grid
+        @param x_constraint: x constraint for chip positions on the wafer
+        @param right: if right, the grid will only contain slots greater than x_constraint. If not right, only slots
+        smaller than the x_constraint will be created
         """
         self.wafer_diameter = wafer_diameter
         self.spacing_x = spacing_x
@@ -45,27 +48,28 @@ class WaferBuilder:
         if x_constraint is not None:
             new_pos = []
             for pos in self.chip_positions:
-                if x_constraint > 0 and pos.x > 0:
+                if right and pos[0] > x_constraint:
                     new_pos.append(pos)
-                if x_constraint < 0 and pos.x < 0:
+                if not right and pos[0] < x_constraint:
                     new_pos.append(pos)
 
+            self.chip_positions = new_pos
 
         # sort chip positions by ascending distance from origin
         self.chip_positions.sort(key=lambda r: r[0]**2+r[1]**2)
 
-    def create_wafer(self, file_out, chip_list):
+    def create_wafer(self, save_name: str, chip_list: [(str, int)]):
         """
         Create a wafer from a list containing name-amount tuples.
-        @param file_out: Name for the wafer
+        @param save_name: Name for the wafer
         @param chip_list: List containing the chip names (+paths)
         """
-        self._write_file(file_out, chip_list)
+        self._write_file(save_name, chip_list)
 
-    def _write_file(self, file_out, chip_list, write_wafer=True):
+    def _write_file(self, save_name: str, chip_list: [(str, int)], write_wafer=True):
         """
         Creates a GDS wafer file from a given chip list.
-        @param file_out: Name of the wafer
+        @param save_name: Name of the wafer
         @param chip_list: List containing the chip names (+paths)
         @param write_wafer: If true, adds a round wafer for reference
         """
@@ -93,9 +97,9 @@ class WaferBuilder:
         def write_chips():
             index = 0
             for chip, amount in chip_list:
+                print("reading chip " + chip)
                 lay.read(chip + ".gds")
-                # assuming "TOP" as the top cell name (i.e. the chips are generated with the Blueprint)
-                chip_cell = lay.cell_by_name("TOP")
+                chip_cell = lay.cell_by_name("TOP")  # TODO: maybe change to first top cell in the future
                 for _ in range(amount):
                     if index == len(self.chip_positions):
                         return
@@ -106,15 +110,15 @@ class WaferBuilder:
                     top.shapes(lay.layer(1, 0)).insert(pya.SimplePolygon(mark).transform(mark_trans))
                     index += 1
 
-                top.flatten(1)  # flatten to remove the "TOP" cell
+                top.flatten(1)  # flatten to remove the top cell of the resonator
 
         write_chips()
         print("Saving file...")
-        Path("../wafers/").mkdir(parents=True, exist_ok=True)
-        lay.write("../wafers/" + file_out + ".gds")
+        Path("../../wafers/").mkdir(parents=True, exist_ok=True)
+        lay.write("../../wafers/" + save_name + ".gds")
 
     @staticmethod
-    def load_chips(path, amount):
+    def load_chips(path: str, amount: int):
         """
         Load all chips (i.e. all files having a .gds format) from a folder, each of them with the given amount.
         :@param path: Path to the folder
@@ -128,7 +132,7 @@ class WaferBuilder:
         return chip_list
 
     @staticmethod
-    def load_prefixed_chips(path, prefix, amount):
+    def load_prefixed_chips(path: str, prefix: str, amount: int):
         """
         Load all chips (i.e. all files having a .gds format) from a folder with a given prefix, each of them with the given
         amount.
@@ -144,7 +148,7 @@ class WaferBuilder:
         return chip_list
 
 
-def _mark(arm_length, arm_width):
+def _mark(arm_length: float, arm_width: float):
     """
     Helper for creating marks.
     :@param arm_length: Arm length of the mark, measured from (0, 0)

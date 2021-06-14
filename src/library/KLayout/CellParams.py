@@ -1,7 +1,8 @@
 import klayout.db as pya
-import src.library.CPWLibrary.Curve as Curve
-import src.library.CPWLibrary.Straight as Straight
-import src.library.CPWLibrary.Port as Port
+import src.library.KLayout.Curve as Curve
+import src.library.KLayout.Straight as Straight
+import src.library.KLayout.Port as Port
+import src.library.KLayout.CustomPort as CustomPort
 
 """
 This File contains all necessary parameters for the cQED klayout library. Each class has a list() method which returns
@@ -54,7 +55,7 @@ class CurveParams:
 
 
 class PortParams:
-    def __init__(self, width_port=140, length_taper=300, length_port=140, spacing=0, width=10, gap=6, ground=50, hole=40):
+    def __init__(self, width_port=160, length_taper=300, length_port=140, spacing=0, width=10, gap=6, ground=50, hole=40):
         """
         Initializes smooth port parameters from the own KLayout library.
         :@param cp: Related chip params
@@ -70,7 +71,7 @@ class PortParams:
 
     def end_point(self):
         """
-        Calculates the x position for the (right mirrored) port, i.e. -port_x is the start position for the left port
+        Calculates the x position for the (right, mirrored) port, i.e. -port_x is the start position for the left port
         @return: x position for the right mirrored port
         """
         return Port.end_point(self.length_taper, self.length_port, self.width_port, self.spacing, self.width, self.gap,
@@ -82,6 +83,39 @@ class PortParams:
         :@return: a dictionary containing all parameters
         """
         return {"length_taper": self.length_taper, "length_port": self.length_port, "width_port": self.width_port,
+                "spacing": self.spacing, "width": self.width, "gap": self.gap, "ground": self.ground, "hole": self.hole}
+
+
+class CustomPortParams:
+    def __init__(self, width_port=160, gap_port=100, length_taper=300, length_port=140, spacing=0, width=10, gap=6, ground=50, hole=40):
+        """
+        Initializes smooth port parameters from the own KLayout library.
+        :@param cp: Related chip params
+        """
+        self.spacing = spacing
+        self.width_port = width_port
+        self.gap_port = gap_port
+        self.length_taper = length_taper
+        self.length_port = length_port
+        self.width = width
+        self.gap = gap
+        self.ground = ground
+        self.hole = hole
+
+    def end_point(self):
+        """
+        Calculates the x position for the (right, mirrored) port, i.e. -port_x is the start position for the left port
+        @return: x position for the right mirrored port
+        """
+        return CustomPort.end_point(self.length_taper, self.length_port, self.width_port, self.gap_port, self.spacing, self.width, self.gap,
+                              self.ground, self.hole)
+
+    def as_list(self):
+        """
+        Returns a param dictionary for creating KLayout cells
+        :@return: a dictionary containing all parameters
+        """
+        return {"length_taper": self.length_taper, "length_port": self.length_port, "width_port": self.width_port, "gap_port": self.gap_port,
                 "spacing": self.spacing, "width": self.width, "gap": self.gap, "ground": self.ground, "hole": self.hole}
 
 
@@ -175,7 +209,36 @@ class HoleParams:
                 "sigma": self.sigma, "size": self.size}
 
 
-class HangingResonatorParams:
+class AirbridgeParams:
+
+    def __init__(self, pad_width=100, pad_height=40, gap=35, bridge_pad_width=80, bridge_pad_height=20, bridge_width=40, spacing = 500):
+        self.pad_width = pad_width
+        self.pad_height = pad_height
+        self.gap = gap
+        self.brigde_pad_width = bridge_pad_width
+        self.brigde_pad_height = bridge_pad_height
+        self.bridge_width = bridge_width
+        self.spacing = spacing
+
+    def as_list(self):
+        return {"pad_width": self.pad_width, "pad_height": self.pad_height, "gap": self.gap,
+                "bridge_pad_width": self.brigde_pad_width, "bridge_pad_height": self.brigde_pad_height,
+                "bridge_width": self.bridge_width}
+
+
+class AirbridgeRoundParams:
+
+    def __init__(self, pad_radius=60, gap=35, bridge_pad_radius=50, bridge_width=40):
+        self.pad_radius = pad_radius
+        self.gap = gap
+        self.brigde_pad_radius = bridge_pad_radius
+        self.bridge_width = bridge_width
+
+    def as_list(self):
+        return {"pad_radius": self.pad_radius, "gap": self.gap, "bridge_pad_radius": self.brigde_pad_radius,
+                "bridge_width": self.bridge_width}
+
+class HangingResonatorOldParams:
 
     def __init__(self, segment_length, length, x_offset, y_offset, q_ext, coupling_ground, radius, shorted, width_tl,
                  gap_tl, width, gap, ground, hole):
@@ -203,8 +266,38 @@ class HangingResonatorParams:
         return {"segment_length": self.segment_length, "length": self.length, "x_offset": self.x_offset,
                 "y_offset": self.y_offset, "q_ext": self.q_ext, "coupling_ground": self.coupling_ground,
                 "radius": self.radius, "shorted": self.shorted, "width_tl": self.width_tl, "gap_tl": self.gap_tl, "width": self.width,
-                "gap": self.gap, "ground": self.ground, "hdHole": self.hole}
+                "gap": self.gap, "ground": self.ground, "hole": self.hole}
 
+
+class HangingResonatorParams:
+
+    def __init__(self, segment_length, length, x_offset, y_offset, coupling_length, coupling_ground, radius, shorted, width_tl,
+                 gap_tl, width, gap, ground, hole):
+
+        self.segment_length = segment_length
+        self.length = length
+        self.x_offset = x_offset
+        self.y_offset = y_offset
+        self.coupling_length = coupling_length
+        self.coupling_ground = coupling_ground
+        self.radius = radius
+        self.shorted = shorted
+        self.width_tl = width_tl
+        self.gap_tl = gap_tl
+        self.width = width
+        self.gap = gap
+        self.ground = ground
+        self.hole = hole
+
+    def as_list(self):
+        """
+        Returns a param dictionary for creating KLayout cells
+        :@return: a dictionary containing all parameters
+        """
+        return {"segment_length": self.segment_length, "length": self.length, "x_offset": self.x_offset,
+                "y_offset": self.y_offset, "coupling_length": self.coupling_length, "coupling_ground": self.coupling_ground,
+                "radius": self.radius, "shorted": self.shorted, "width_tl": self.width_tl, "gap_tl": self.gap_tl, "width": self.width,
+                "gap": self.gap, "ground": self.ground, "hole": self.hole}
 
 class HangingResonatorFingersParams:
 
@@ -246,7 +339,7 @@ class HangingResonatorFingersParams:
                 "x_offset": self.x_offset, "y_offset": self.y_offset, "q_ext": self.q_ext,
                 "coupling_ground": self.coupling_ground, "radius": self.radius, "shorted": self.shorted,
                 "width_tl": self.width_tl, "gap_tl": self.gap_tl, "width": self.width, "gap": self.gap,
-                "ground": self.ground, "hdHole": self.hole, "n_fingers": self.n_fingers,
+                "ground": self.ground, "hole": self.hole, "n_fingers": self.n_fingers,
                 "finger_length": self.finger_length, "finger_end_gap": self.finger_end_gap,
                 "finger_spacing": self.finger_spacing, "hook_width": self.hook_width, "hook_length": self.hook_length,
                 "hook_unit": self.hook_unit, "electrode_width": self.electrode_width, "bridge_width": self.bridge_width,

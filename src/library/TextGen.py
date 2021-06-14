@@ -1,14 +1,26 @@
 import klayout.db as pya
 
+"""
+Quick and dirty text generator
+"""
 
-def write_text(layout, text):
 
+def write_text(layout, text, font="circular_font", buffer_trigger="´") -> pya.Cell:
+    """
+    Write a text with a given font file. Special characters (i.e. cells with names longer than one char) can be written
+    by enclosing the cell name with the buffer trigger, e.g. ´Qext´ or ´epsilon´.
+    @param layout: layout to be used for the cell
+    @param text: text to write
+    @param font: font to be used, currently only "circular_font" exists
+    @param buffer_trigger: trigger for the buffer
+    @return: a cell object
+    """
     # auxilliary layout for font loading
     aux = pya.Layout()
     dbu = aux.dbu
 
     lines = text.splitlines()
-    aux.read("../templates/circular_font.gds")
+    aux.read(f"../../templates/{font}.gds")
     text = aux.create_cell("text")
 
     letter_spacing = 5
@@ -23,12 +35,12 @@ def write_text(layout, text):
         buffer = None
 
         for letter in line:
-            if buffer is None and letter == "´":
+            if buffer is None and letter == buffer_trigger:
                 buffer = ""
                 continue
 
             if buffer is not None:
-                if letter == "´":
+                if letter == buffer_trigger:
                     letter = buffer
                     buffer = None
                 else:
@@ -65,6 +77,11 @@ def place_cell_center(layout, cell, text, mag, x, y):
     bbox = text.bbox()
     x = x-bbox.width()*mag*layout.dbu/2
     y = y-bbox.height()*mag*layout.dbu/2
+
+    trans = pya.DCplxTrans.new(mag, 0, False, x, y)
+    cell.insert(pya.DCellInstArray(text.cell_index(), trans))
+
+def place_cell(layout, cell, text, mag, x, y):
 
     trans = pya.DCplxTrans.new(mag, 0, False, x, y)
     cell.insert(pya.DCellInstArray(text.cell_index(), trans))

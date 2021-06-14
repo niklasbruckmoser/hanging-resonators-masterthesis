@@ -1,5 +1,4 @@
 import klayout.db as pya
-import numpy as np
 
 
 class Hallbar(pya.PCellDeclarationHelper):
@@ -11,18 +10,13 @@ class Hallbar(pya.PCellDeclarationHelper):
         # Important: initialize the super class
         super(Hallbar, self).__init__()
 
-
-        # declare the parameters
-        # self.param("l", self.TypeLayer, "Layer", default=pya.LayerInfo(1, 0))
-        # self.param("lm", self.TypeLayer, "LayerMask", default=pya.LayerInfo(10, 0))
-        # self.param("sh", self.TypeShape, "", default=pya.DPoint(0, 0))
         self.param("padsize", self.TypeDouble, "pad size", default=10)
         self.param("length", self.TypeDouble, "length of lines", default=6)
         self.param("width", self.TypeDouble, "width of lines", default=50)
 
     def display_text_impl(self):
         # Provide a descriptive text for the cell
-        return "End"
+        return "Hallbar"
 
     def coerce_parameters_impl(self):
         pass

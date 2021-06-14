@@ -13,9 +13,6 @@ class StraightFingers(pya.PCellDeclarationHelper):
         super(StraightFingers, self).__init__()
 
         # declare the parameters
-        # self.param("l", self.TypeLayer, "Layer", default=pya.LayerInfo(1, 0))
-        # self.param("lm", self.TypeLayer, "LayerMask", default=pya.LayerInfo(10, 0))
-        # self.param("sh", self.TypeShape, "", default=pya.DPoint(0, 0))
         self.param("length", self.TypeDouble, "length of straight", default=200)
         self.param("width", self.TypeDouble, "width cpw", default=10)
         self.param("gap", self.TypeDouble, "gap cpw", default=6)

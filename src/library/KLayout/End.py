@@ -1,21 +1,15 @@
 import klayout.db as pya
-import numpy as np
 
 
 class End(pya.PCellDeclarationHelper):
     """
-    Coplanar waveguide port
+    Coplanar waveguide end, for resonators
     """
 
     def __init__(self):
         # Important: initialize the super class
         super(End, self).__init__()
 
-
-        # declare the parameters
-        # self.param("l", self.TypeLayer, "Layer", default=pya.LayerInfo(1, 0))
-        # self.param("lm", self.TypeLayer, "LayerMask", default=pya.LayerInfo(10, 0))
-        # self.param("sh", self.TypeShape, "", default=pya.DPoint(0, 0))
         self.param("short", self.TypeInt, "shorted?", default=0)
         self.param("width", self.TypeDouble, "width cpw", default=10)
         self.param("gap", self.TypeDouble, "gap cpw", default=6)
@@ -54,17 +48,17 @@ def create_end(obj, start, rotation, short, width, gap, ground, hole):
     p_g = width/2+gap
 
     hole_list.append(pya.DPoint(0, p_hole))
-    hole_list.append(pya.DPoint(ground+hole, p_hole))
-    hole_list.append(pya.DPoint(ground+hole, -p_hole))
+    hole_list.append(pya.DPoint(ground+hole+gap, p_hole))
+    hole_list.append(pya.DPoint(ground+hole+gap, -p_hole))
     hole_list.append(pya.DPoint(0, -p_hole))
     hole_list.append(pya.DPoint(0, -p_mask))
-    hole_list.append(pya.DPoint(ground, -p_mask))
-    hole_list.append(pya.DPoint(ground, p_mask))
+    hole_list.append(pya.DPoint(ground+gap, -p_mask))
+    hole_list.append(pya.DPoint(ground+gap, p_mask))
     hole_list.append(pya.DPoint(0, p_mask))
 
     mask_list.append(pya.DPoint(0, p_mask))
-    mask_list.append(pya.DPoint(ground, p_mask))
-    mask_list.append(pya.DPoint(ground, -p_mask))
+    mask_list.append(pya.DPoint(ground+gap, p_mask))
+    mask_list.append(pya.DPoint(ground+gap, -p_mask))
     mask_list.append(pya.DPoint(0, -p_mask))
 
     if not short:

@@ -2,14 +2,14 @@ import klayout.db as pya
 import numpy as np
 import os
 import pickle
-import src.coplanar_coupler as coupler
+import src.library.coplanar_coupler as coupler
 import math
 
-from src.library.CPWLibrary.Straight import create_straight
-from src.library.CPWLibrary.StraightFingers import create_straight_fingers
-from src.library.CPWLibrary.Curve import create_curve
-from src.library.CPWLibrary.End import create_end
-from src.library.CPWLibrary.EndHooks import create_end_hooks
+from src.library.KLayout.Straight import create_straight
+from src.library.KLayout.StraightFingers import create_straight_fingers
+from src.library.KLayout.Curve import create_curve
+from src.library.KLayout.End import create_end
+from src.library.KLayout.EndHooks import create_end_hooks
 
 
 class HangingResonatorFingers(pya.PCellDeclarationHelper):
