@@ -1,10 +1,9 @@
-import klayout.db as pya
-from src.library.CPWLibrary.GerberLibrary.GerberCurve import *
-from src.library.CPWLibrary.GerberLibrary.GerberStraight import *
-from src.library.CPWLibrary.GerberLibrary.GerberHangingResonator import *
-from src.library.CPWLibrary.GerberLibrary.GerberEnd import *
-from src.library.CPWLibrary.GerberLibrary.GerberHole import *
-from src.library.CPWLibrary.GerberLibrary.GerberPort import *
+from src.legacy.GerberLibrary.GerberCurve import *
+from src.legacy.GerberLibrary.GerberStraight import *
+from src.legacy.GerberLibrary.GerberHangingResonator import *
+from src.legacy.GerberLibrary.GerberEnd import *
+from src.legacy.GerberLibrary.GerberHole import *
+from src.legacy.GerberLibrary.GerberPort import *
 
 
 class Main(pya.Library):

@@ -2,14 +2,15 @@ import klayout.db as pya
 import numpy as np
 import os
 import pickle
-import src.coplanar_coupler as coupler
+import src.library.coplanar_coupler as coupler
 
-from src.library.CPWLibrary.GerberLibrary.GerberStraight import create_straight
-from src.library.CPWLibrary.GerberLibrary.GerberCurve import create_curve
-from src.library.CPWLibrary.GerberLibrary.GerberEnd import create_end
+from src.library.KLayout.Straight import create_straight
+from src.library.KLayout.Curve import create_curve
+from src.library.KLayout.End import create_end
+from src.library.KLayout.Airbridge import create_airbridge
 
 
-class GHangingResonator(pya.PCellDeclarationHelper):
+class HangingResonatorOld(pya.PCellDeclarationHelper):
     """
     Hanging resonator. The origin is centered in x direction and at the position of the transmission line in y direction
     """
@@ -18,7 +19,7 @@ class GHangingResonator(pya.PCellDeclarationHelper):
 
     def __init__(self):
         # Important: initialize the super class
-        super(GHangingResonator, self).__init__()
+        super(HangingResonatorOld, self).__init__()
 
         # declare the parameters
         self.param("segment_length", self.TypeDouble, "segment length", default=700)
@@ -80,12 +81,17 @@ def create_res(obj, start, rotation, segment_length, length, x_offset, y_offset,
     curr = create_curve(obj, curr, rotation, radius, 90, 0, width, gap, ground, hole)
     length -= np.pi/180*radius*90
 
+    last_curr = curr
 
     if length < y_offset:
         curr = create_straight(obj, curr, 90+rotation, length, width, gap, ground, hole)
         create_end(obj, curr, 90+rotation, shorted, width, gap, ground, hole)
         return
     curr = create_straight(obj, curr, 90+rotation, y_offset, width, gap, ground, hole)
+    # ab_pos = pya.DPoint((curr.x+last_curr.x)/2,(curr.y+last_curr.y)/2)
+    ab_pos = (last_curr+curr) / 2
+    create_airbridge(obj, ab_pos, 90+rotation, 40/dbu, 30/dbu, 35/dbu, 30/dbu, 20/dbu, 15/dbu)
+
     length -= y_offset
 
     if length < np.pi/180*radius*90:
@@ -102,8 +108,11 @@ def create_res(obj, start, rotation, segment_length, length, x_offset, y_offset,
         curr = create_straight(obj, curr, 180+rotation, length, width, gap, ground, hole)
         create_end(obj, curr, 180+rotation, shorted, width, gap, ground, hole)
         return
+    last_curr = curr
     curr = create_straight(obj, curr, 180+rotation, x_offset, width, gap, ground, hole)
     length -= x_offset
+    ab_pos = (last_curr+curr) / 2
+    create_airbridge(obj, ab_pos, rotation, 40/dbu, 30/dbu, 35/dbu, 30/dbu, 20/dbu, 15/dbu)
 
     # begin meandering loop
 
@@ -122,8 +131,13 @@ def create_res(obj, start, rotation, segment_length, length, x_offset, y_offset,
             curr = create_straight(obj, curr, rotation if right is True else 180+rotation, length, width, gap, ground, hole)
             create_end(obj, curr, rotation if right else 180+rotation, shorted, width, gap, ground, hole)
             return
+        last_curr = curr
         curr = create_straight(obj, curr, rotation if right is True else 180+rotation, segment_length, width, gap, ground, hole)
         length -= segment_length
+
+        ab_pos = (last_curr+curr) / 2
+        create_airbridge(obj, ab_pos, rotation, 40/dbu, 30/dbu, 35/dbu, 30/dbu, 20/dbu, 15/dbu)
+
         right = not right
 
 
@@ -137,7 +151,7 @@ def calc_coupling_length(width_cpw, gap_cpw, width_res, gap_res, coupling_ground
     :@return: The calculated coupling length
     """
     key = (width_cpw, gap_cpw, width_res, gap_res,
-           coupling_ground, GHangingResonator.epsilon_eff)
+           coupling_ground, HangingResonatorOld.epsilon_eff)
 
     kappa_dict = _load_kappa_dict()
 
@@ -185,8 +199,7 @@ def _v_ph():
     Get the phase velocity for Si-Air
     @return: Approximate phase velocity of light
     """
-    # TODO: replace 3e8 with more exact value of speed of light
-    return 3e8 / np.sqrt(GHangingResonator.epsilon_eff)
+    return 3e8 / np.sqrt(HangingResonatorOld.epsilon_eff)
 
 
 

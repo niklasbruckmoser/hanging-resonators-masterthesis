@@ -2,14 +2,14 @@ import klayout.db as pya
 import numpy as np
 import os
 import pickle
-import src.coplanar_coupler as coupler
+import src.library.coplanar_coupler as coupler
 
-from src.library.CPWLibrary.Straight import create_straight
-from src.library.CPWLibrary.Curve import create_curve
-from src.library.CPWLibrary.End import create_end
+from src.legacy.GerberLibrary.GerberStraight import create_straight
+from src.legacy.GerberLibrary.GerberCurve import create_curve
+from src.legacy.GerberLibrary.GerberEnd import create_end
 
 
-class HangingResonator(pya.PCellDeclarationHelper):
+class GHangingResonator(pya.PCellDeclarationHelper):
     """
     Hanging resonator. The origin is centered in x direction and at the position of the transmission line in y direction
     """
@@ -18,7 +18,7 @@ class HangingResonator(pya.PCellDeclarationHelper):
 
     def __init__(self):
         # Important: initialize the super class
-        super(HangingResonator, self).__init__()
+        super(GHangingResonator, self).__init__()
 
         # declare the parameters
         self.param("segment_length", self.TypeDouble, "segment length", default=700)
@@ -137,7 +137,7 @@ def calc_coupling_length(width_cpw, gap_cpw, width_res, gap_res, coupling_ground
     :@return: The calculated coupling length
     """
     key = (width_cpw, gap_cpw, width_res, gap_res,
-           coupling_ground, HangingResonator.epsilon_eff)
+           coupling_ground, GHangingResonator.epsilon_eff)
 
     kappa_dict = _load_kappa_dict()
 
@@ -185,7 +185,8 @@ def _v_ph():
     Get the phase velocity for Si-Air
     @return: Approximate phase velocity of light
     """
-    return 3e8 / np.sqrt(HangingResonator.epsilon_eff)
+    # TODO: replace 3e8 with more exact value of speed of light
+    return 3e8 / np.sqrt(GHangingResonator.epsilon_eff)
 
 
 
