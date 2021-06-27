@@ -72,7 +72,7 @@ def create_smooth_port(obj, start, length_taper, length_port, width_port, gap_po
 
     for z in np.linspace(0, 1, res):
         h_w = get_height(z)*(width_port-width_cpw)/2+width_cpw/2
-        h_g = get_height(z)*gap_port + (1-get_height(z))+gap_cpw
+        h_g = get_height(z)*gap_port + (1-get_height(z))*gap_cpw
 
         hole_list.append(pya.DPoint(x_offset + z * length_taper, h_w + h_g + ground + hole))
         mask_list.append(pya.DPoint(x_offset + z * length_taper, h_w + h_g + ground))
@@ -80,7 +80,7 @@ def create_smooth_port(obj, start, length_taper, length_port, width_port, gap_po
 
     for z in np.linspace(1, 0, res):
         h_w = get_height(z)*(width_port-width_cpw)/2+width_cpw/2
-        h_g = get_height(z)*gap_port + (1-get_height(z))+gap_cpw
+        h_g = get_height(z)*gap_port + (1-get_height(z))*gap_cpw
 
         hole_list.append(pya.DPoint(x_offset + z * length_taper, h_w + h_g + ground))
         mask_list.append(pya.DPoint(x_offset + z * length_taper, -(h_w + h_g + ground)))
@@ -95,14 +95,14 @@ def create_smooth_port(obj, start, length_taper, length_port, width_port, gap_po
 
     for z in np.linspace(0, 1, res):
         h_w = get_height(z)*(width_port-width_cpw)/2+width_cpw/2
-        h_g = get_height(z)*gap_port + (1-get_height(z))+gap_cpw
+        h_g = get_height(z)*gap_port + (1-get_height(z))*gap_cpw
 
         hole_list.append(pya.DPoint(x_offset + z * length_taper, -(h_w + h_g + ground)))
         gap_list.append(pya.DPoint(x_offset + z * length_taper, -h_w))
 
     for z in np.linspace(1, 0, res):
         h_w = get_height(z)*(width_port-width_cpw)/2+width_cpw/2
-        h_g = get_height(z)*gap_port + (1-get_height(z))+gap_cpw
+        h_g = get_height(z)*gap_port + (1-get_height(z))*gap_cpw
 
         hole_list.append(pya.DPoint(x_offset + z * length_taper, -(h_w + h_g + ground + hole)))
         gap_list.append(pya.DPoint(x_offset + z * length_taper, -(h_w + h_g)))
