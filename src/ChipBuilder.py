@@ -21,7 +21,8 @@ class ChipBuilder():
     def __init__(self, template=None):
         """
         Initialize the chip builder with an optional template
-        @param template: if not None, this will initialize the chip builder with a given template. TODO explanation
+        @param template: if not None, this will initialize the chip builder with a given template. For templates, see
+                         templates/ChipTemplates.py
         """
         # parameter declaration
         self.chip_size = (10000, 6000)
@@ -36,13 +37,17 @@ class ChipBuilder():
         self.logo_list = {}
         self.marker_list = {}
         self.text = "´f0´ (GHz): $FREQUENCIES$"
+        self.global_rotation = 0
 
         self.airbridge_params = None
-        self.default_resonator_params = HangingResonatorParams(950, 5000, 950, 300, 100, 20, 100, 1, 10, 6, 10, 6, 10, 40)
+        self.default_resonator_params = HangingResonatorParams(950, 5000, 950, 300, 5e5, 20, 100, 1, 10, 6, 10, 6, 10,
+                                                               40)
 
         # init from template
         if template is not None:
-            getattr(ChipBuilder, f"_template_{template}")(self)
+            import templates.ChipTemplates as CT
+            getattr(CT, f"{template}")(self)
+
 
         self.lay = None
         self.top = None
@@ -177,6 +182,15 @@ class ChipBuilder():
         self.eps_eff = eps_eff
         return self
 
+    def set_global_rotation(self, rotation: float) -> ChipBuilder:
+        """
+        Set the global rotation of the chip
+        @param rotation: rotation in degrees. -90 for Laserwriter chips
+        @return: ChipBuilder object for chaining
+        """
+        self.global_rotation = rotation
+        return self
+
     def set_logo(self, position: str, name: str, size: float, spacing: float) -> ChipBuilder:
         """
         Set a logo at a given position
@@ -191,7 +205,14 @@ class ChipBuilder():
         self.logo_list[position] = (name, size, spacing)
         return self
 
-    def remove_logo(self, position='all') -> ChipBuilder:
+    def remove_logos(self) -> ChipBuilder:
+        """
+        Remove all logos from the chip
+        @return: ChipBuilder object for chaining
+        """
+        return self.remove_logo('all')
+
+    def remove_logo(self, position) -> ChipBuilder:
         """
         Remove a logo at a given position
         @param position: either one of the four corners or 'all' for all positions
@@ -208,27 +229,36 @@ class ChipBuilder():
             self.logo_list.pop('lr', None)
         return self
 
-    def set_marker(self, position: str, name: str, spacing: float, rotation=0) -> ChipBuilder:
+    def set_marker(self, position: str, name: str, spacing: float, layers=[1], rotation=None) -> ChipBuilder:
         """
         Set an alignment marker at a given position
         @param position: position of the marker on the chip - either 'ul', 'ur', 'll', 'lr' or 'all'
         @param name: file name (without .gds suffix) of the marker, see folder "templates"
         @param spacing: spacing from the middle of the marker to the closest chip borders
-        @param rotation: marker rotation (relevant for single chips, as they are typically being rotated by 90 degrees)
+        @param layers: list of layers for the marker. By default [1] (main layer)
+        @param rotation: marker rotation (relevant for single chips, as they are typically being rotated by 90 degrees).
+                         A rotation of "None" (default) rotates the markers accordingly to the global rotation
         @return: ChipBuilder object for chaining
         """
         if position not in ['ul', 'ur', 'll', 'lr', 'all']:
             raise ValueError(f"Marker position '{position}' not valid! Use 'ul', 'ur', 'll', 'lr' or 'all'.")
         if position != 'all':
-            self.marker_list[position] = (name, spacing, rotation)
+            self.marker_list[position] = (name, spacing, layers, rotation)
         else:
-            self.marker_list['ul'] = (name, spacing, rotation)
-            self.marker_list['ur'] = (name, spacing, rotation)
-            self.marker_list['ll'] = (name, spacing, rotation)
-            self.marker_list['lr'] = (name, spacing, rotation)
+            self.marker_list['ul'] = (name, spacing, layers, rotation)
+            self.marker_list['ur'] = (name, spacing, layers, rotation)
+            self.marker_list['ll'] = (name, spacing, layers, rotation)
+            self.marker_list['lr'] = (name, spacing, layers, rotation)
         return self
 
-    def remove_marker(self, position='all') -> ChipBuilder:
+    def remove_markers(self) -> ChipBuilder:
+        """
+        Remove all markers of the chip
+        @return: ChipBuilder object for chaining
+        """
+        return self.remove_marker('all')
+
+    def remove_marker(self, position) -> ChipBuilder:
         """
         Remove an alignment marker at a given position
         @param position: position of the marker on the chip - either 'ul', 'ur', 'll', 'lr' or 'all'
@@ -356,17 +386,6 @@ class ChipBuilder():
         @param hole: high density hole width of the resonator cpw
         @return:
         """
-        # segment_length = segment_length or self.default_resonator_params.segment_length
-        # y_offset = y_offset or self.default_resonator_params.y_offset
-        # q_ext = q_ext or self.default_resonator_params.coupling_length  # q ext saved in coupling length
-        # coupling_ground = coupling_ground or self.default_resonator_params.coupling_ground
-        # radius = radius or self.default_resonator_params.radius
-        # shorted = shorted or self.default_resonator_params.shorted
-        # width = width or self.default_resonator_params.width
-        # gap = gap or self.default_resonator_params.gap
-        # ground = ground or self.default_resonator_params.ground
-        # hole = hole or self.default_resonator_params.hole
-
         param_list = []
         interval = (f0_end - f0_start) / (amount_resonators - 1)
         for i in range(amount_resonators):
@@ -382,54 +401,7 @@ class ChipBuilder():
     ###               ###
     #####################
 
-    def _template_10x6_wmi(self):
-        """
-        Template for a 10x6 wmi chip. Initialize with "10x6_wmi"
-        """
-        self.set_chip_size(10000, 6000).set_TL_width(10).set_TL_gap(6)
-        self.set_TL_ground(10).set_TL_hole(40).set_hole_mask("hole_mask_small")
-        self.set_port_parameters(160, 200, 300, 100)
-        self.set_default_resonator_parameters(950, 300, 4e5, 20, 100, 1, 10, 6, 10, 40)
-        self.set_logo('ur', "logo_mcqst", 0.4, 300).set_logo('ul', "logo_wmi", 0.5, 300)
-        self.set_eps_eff(6.45)
-        self.set_text("´f0´ (GHz): $FREQUENCIES$", False)
-
-    def _template_10x6_single(self):
-        """
-        Template for a 10x6 wmi chip. Initialize with "10x6_wmi"
-        """
-        self.set_chip_size(8000, 4000).set_TL_width(10).set_TL_gap(6)
-        self.set_TL_ground(10).set_TL_hole(40).set_hole_mask("hole_mask_small")
-        self.set_port_parameters(160, 200, 300, 100)
-        self.set_default_resonator_parameters(950, 300, 4e5, 20, 100, 1, 10, 6, 10, 40)
-        self.set_logo('ur', "logo_mcqst", 0.4, 200).set_logo('ul', "logo_wmi", 0.5, 200)
-        self.set_eps_eff(6.45)
-        self.set_text("´f0´ (GHz): $FREQUENCIES$", False)
-
-    def _template_10x6_wmi_ab(self):
-        """
-        Template for a single 10x6 airbridge chip (not wafer scale). Initialize with "10x6_wmi_ab"
-        """
-        self.set_chip_size(8500, 4500).set_TL_width(10).set_TL_gap(6)
-        self.set_TL_ground(10).set_TL_hole(40).set_hole_mask("hole_mask_small")
-        self.set_port_parameters(160, 200, 300, 100)
-        self.set_default_resonator_parameters(950, 300, 4e5, 20, 100, 1, 10, 6, 10, 40)
-        self.set_marker('ll', "marker_LW", 0, 90).set_marker('ur', "marker_LW", 0, 90)
-        self.set_logo('ur', "logo_mcqst", 0.4, 300).set_logo('ul', "logo_wmi", 0.5, 300)
-        self.set_eps_eff(6.45)
-        self.set_text("´f0´ (GHz): $FREQUENCIES$", False)
-        self.set_airbridges(True)
-
-    def _template_7x4p3_wmi(self):
-        """
-        Template for a 7x4.3 chip. Initialize with "7x4p3_wmi"
-        """
-        self.set_chip_size(7000, 4300).set_TL_width(10).set_TL_gap(6)
-        self.set_TL_ground(10).set_TL_hole(40).set_hole_mask("hole_mask_small")
-        self.set_port_parameters(160, 200, 300, 100)
-        self.set_logo('ul', "logo_mcqst", 0.4, 300).set_logo('ur', "logo_wmi", 0.5, 300)
-        self.set_eps_eff(6.45)
-        self.set_text("´f0´ (GHz): $FREQUENCIES$", False)
+    # shifted to ChipTemplates
 
     #######################
     ###                 ###
@@ -454,6 +426,7 @@ class ChipBuilder():
         self._write_logos()
         self._write_text()
         self._perform_boolean_operations()
+        self._rotate_design()
         self._save_chip(save_name, file_format)
 
     ########################
@@ -587,14 +560,24 @@ class ChipBuilder():
 
             marker_name = data[0]
             marker_spacing = data[1]
-            marker_rotation = data[2]
+            layers = data[2]
+            marker_rotation = data[3]
 
-            self.lay.read(f"../../templates/{marker_name}.gds")
-            cell = self.lay.top_cells()[1].cell_index()
-            trans = pya.DCplxTrans.new(1, marker_rotation, False, x_sign*(self.chip_size[0]/2 - marker_spacing),
-                                       y_sign*(self.chip_size[1]/2 - marker_spacing))
-            self.top.insert(pya.DCellInstArray(cell, trans))
-            self.top.flatten(1)
+            if marker_rotation is None:
+                marker_rotation = -self.global_rotation
+
+            for layer in layers:
+
+                self.lay.read(f"../../templates/{marker_name}.gds")
+                cell = self.lay.top_cells()[1].cell_index()
+
+                index = self.lay.layer(pya.LayerInfo(layer, 0))  # create or find new layer
+                self.lay.top_cells()[1].swap(0, index)
+
+                trans = pya.DCplxTrans.new(1, marker_rotation, False, x_sign*(self.chip_size[0]/2 - marker_spacing),
+                                           y_sign*(self.chip_size[1]/2 - marker_spacing))
+                self.top.insert(pya.DCellInstArray(cell, trans))
+                self.top.flatten(1)
 
     def _write_logos(self):
         """
@@ -626,8 +609,9 @@ class ChipBuilder():
             self.lay.read(f"../../templates/{logo_name}.gds")
             cell = self.lay.top_cells()[1]
             bbox = cell.bbox()
-            trans = pya.DCplxTrans.new(size_multiplier, 0, False, x_sign*(self.chip_size[0]/2 - logo_spacing - size_multiplier*bbox.width()/2000), # -550
-                                       y_sign*(self.chip_size[1]/2 - logo_spacing - size_multiplier*bbox.height()/2000)) # -325
+            trans = pya.DCplxTrans.new(size_multiplier, 0, False,
+                                       x_sign*(self.chip_size[0]/2 - logo_spacing - size_multiplier*bbox.width()/2000),
+                                       y_sign*(self.chip_size[1]/2 - logo_spacing - size_multiplier*bbox.height()/2000))
             self.top.insert(pya.DCellInstArray(cell.cell_index(), trans))
 
             self.top.flatten(1)
@@ -641,7 +625,6 @@ class ChipBuilder():
         frequencies = []
         for res in self.resonator_list:
             frequencies.append(Util.calc_f0(res.length*1000, self.eps_eff))
-            # frequencies.append(HangingResonator.calc_f0(res.length*1000))
 
         f_text = ""
 
@@ -665,7 +648,7 @@ class ChipBuilder():
 
     def _perform_boolean_operations(self):
         """
-        Subroutine for performing the boolean layer operations. This has to be the last step before saving the file
+        Subroutine for performing the boolean layer operations. This has to be done after adding all of the cells
         """
 
         print("performing boolean operations...")
@@ -689,34 +672,40 @@ class ChipBuilder():
         # prepare a shape processor
         processor = pya.ShapeProcessor()
 
-        # preprocessing
+        # make sure ground is also at high density holes
         processor.boolean(self.lay, self.top, l11, self.lay, self.top, l10, self.top.shapes(l11),
                           pya.EdgeProcessor.ModeANotB, True, True, True)
 
-        # hole boolean operations
-
+        # layer for chip boundaries
         self.top.shapes(l3).insert(pya.Box(-self.chip_size[0]/2/self.dbu, -self.chip_size[1]/2/self.dbu,
                                            self.chip_size[0]/2/self.dbu, self.chip_size[1]/2/self.dbu))
 
+        # periodic holes in chip boundaries
         processor.boolean(self.lay, self.top, l12, self.lay, self.top, l3, self.top.shapes(l12),
                           pya.EdgeProcessor.ModeAnd, True, True, True)
-        processor.boolean(self.lay, self.top, l13, self.lay, self.top, l3, self.top.shapes(l13),
-                          pya.EdgeProcessor.ModeAnd, True, True, True)
 
-        processor.boolean(self.lay, self.top, l13, self.lay, self.top, l11, self.top.shapes(l13),
-                          pya.EdgeProcessor.ModeAnd, True, True, True)
+
+        # remove periodic holes from hd hole mask
         processor.boolean(self.lay, self.top, l12, self.lay, self.top, l11, self.top.shapes(l12),
                           pya.EdgeProcessor.ModeANotB, True, True, True)
+        # remove periodic holes from ground
         processor.boolean(self.lay, self.top, l12, self.lay, self.top, l10, self.top.shapes(l12),
                           pya.EdgeProcessor.ModeANotB, True, True, True)
+        # remove periodic holes from logo background
         processor.boolean(self.lay, self.top, l12, self.lay, self.top, l14, self.top.shapes(l12),
                           pya.EdgeProcessor.ModeANotB, True, True, True)
+        # remove periodic holes from text
         processor.boolean(self.lay, self.top, l12, self.lay, self.top, l2, self.top.shapes(l12),
                           pya.EdgeProcessor.ModeANotB, True, True, True)
+        # remove periodic holes from airbridge pads
         processor.boolean(self.lay, self.top, l12, self.lay, self.top, l15, self.top.shapes(l12),
                           pya.EdgeProcessor.ModeANotB, True, True, True)
-        processor.boolean(self.lay, self.top, l13, self.lay, self.top, l15, self.top.shapes(l13),
+        processor.boolean(self.lay, self.top, l11, self.lay, self.top, l15, self.top.shapes(l11),
                           pya.EdgeProcessor.ModeANotB, True, True, True)
+
+        # hd hole mask in chip boundaries
+        processor.boolean(self.lay, self.top, l13, self.lay, self.top, l11, self.top.shapes(l13),
+                          pya.EdgeProcessor.ModeAnd, True, True, True)
 
         # place everything into a single layer (0, 12, 13 into 1)
         target_layer = self.top.shapes(l1)
@@ -735,10 +724,14 @@ class ChipBuilder():
         self.lay.clear_layer(l12)
         self.lay.clear_layer(l13)
 
-        # self.top.shapes(l3).insert(pya.Box(-self.chip_size[0]/2/self.dbu, -self.chip_size[1]/2/self.dbu,
-        #                                    self.chip_size[0]/2/self.dbu, self.chip_size[1]/2/self.dbu))
-        # processor.boolean(self.lay, self.top, l3, self.lay, self.top, l1, self.top.shapes(l1),
-        #                   pya.EdgeProcessor.ModeAnd, True, True, True)
+
+    def _rotate_design(self):
+        """
+        Rotate the whole design by the global rotation
+        """
+        if self.global_rotation != 0:
+            print("Rotating design...")
+            self.lay.transform(pya.DCplxTrans.new(1, self.global_rotation, False, 0, 0))
 
     def _save_chip(self, save_name: str, file_format: str):
         """
