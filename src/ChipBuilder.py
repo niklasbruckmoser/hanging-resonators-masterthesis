@@ -571,8 +571,8 @@ class ChipBuilder():
                 self.lay.read(f"../../templates/{marker_name}.gds")
                 cell = self.lay.top_cells()[1].cell_index()
 
-                index = self.lay.layer(pya.LayerInfo(layer, 0))  # create or find new layer
-                self.lay.top_cells()[1].swap(0, index)
+                self.lay.top_cells()[1].swap(self.lay.layer(pya.LayerInfo(0, 0)),
+                                             self.lay.layer(pya.LayerInfo(layer, 0)))
 
                 trans = pya.DCplxTrans.new(1, marker_rotation, False, x_sign*(self.chip_size[0]/2 - marker_spacing),
                                            y_sign*(self.chip_size[1]/2 - marker_spacing))
