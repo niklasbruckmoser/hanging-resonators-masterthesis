@@ -5,8 +5,8 @@ import src.library.KLayout.Port as Port
 import src.library.KLayout.CustomPort as CustomPort
 
 """
-This File contains all necessary parameters for the cQED klayout library. Each class has a list() method which returns
-a dictionary for the corresponding PCell in the library.
+This File contains all necessary parameters for the cQED klayout library. Each class has an as_list() method which 
+returns a dictionary for the corresponding PCell in the library.
 """
 
 

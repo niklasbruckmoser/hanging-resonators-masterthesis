@@ -49,7 +49,7 @@ class ChipBuilder:
         if markers:
             self._write_markers_leo()
         self._write_text(text)
-        # self._perform_boolean_operations()
+        self._perform_boolean_operations()
         self._write_file(file_out)
 
         self.frequencies = []
@@ -121,7 +121,7 @@ class ChipBuilder:
 
         # hole files
         # TODO: auto generate if not existent?
-        self.lay.read("../templates/" + name + ".gds")
+        self.lay.read("../../templates/" + name + ".gds")
 
         cell = self.lay.cell_by_name("HOLE")
         trans = pya.DCplxTrans.new(1, 0, False, 0, 0)
@@ -141,8 +141,8 @@ class ChipBuilder:
             logo_spacing = 50
 
         # logo files
-        self.lay.read("../templates/logo_mcqst.gds")
-        self.lay.read("../templates/logo_wmi.gds")
+        self.lay.read("../../templates/logo_mcqst.gds")
+        self.lay.read("../../templates/logo_wmi.gds")
 
         cell_mcqst = self.lay.cell_by_name("MCQST")
         trans = pya.DCplxTrans.new(size_multiplier, 0, False, self.chip_width / 2 - logo_spacing - 550,
@@ -210,7 +210,7 @@ class ChipBuilder:
             file = "nb5marker_inverted"
         else:
             file = "nb5marker"
-        self.lay.read("../templates/" + file + ".gds")
+        self.lay.read("../../templates/" + file + ".gds")
         cell_marker = self.lay.cell_by_name("nb5marker")
         trans = pya.DCplxTrans.new(1, 0, False, 0, 0)
         self.top.insert(pya.DCellInstArray(cell_marker, trans))
@@ -313,8 +313,8 @@ class ChipBuilder:
         :@param file_out: Name of the .gds file
         """
         print("Saving file...")
-        Path("../../chips/").mkdir(parents=True, exist_ok=True)
-        self.lay.write("../chips/" + file_out + ".gds")
+        Path("../../../chips/").mkdir(parents=True, exist_ok=True)
+        self.lay.write("../../chips/" + file_out + ".gds")
 
     def res_params(self, f_start, f_end, amount_resonators=11, segment_length=950, x_offset=950, y_offset=300,
                    q_ext=1e5, coupling_ground=10, radius=100, shorted=1, width_tl=10, gap_tl=6, width=10, gap=6,

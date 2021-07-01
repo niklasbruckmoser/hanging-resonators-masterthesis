@@ -288,8 +288,9 @@ class ChipBuilder():
             self.text = text
         return self
 
-    def set_default_resonator_parameters(self, segment_length=950, y_offset=300, q_ext=4e5, coupling_ground=20,
-                                         radius=100, shorted=1, width=10, gap=6, ground=10, hole=40) -> ChipBuilder:
+    def set_default_resonator_parameters(self, segment_length=None, y_offset=None, q_ext=None, coupling_ground=None,
+                                         radius=None, shorted=None, width=None, gap=None, ground=None,
+                                         hole=None) -> ChipBuilder:
         """
         Set default fallback resonator parameters
         @param segment_length: length of the x straight
@@ -304,6 +305,17 @@ class ChipBuilder():
         @param hole: high density hole width of the resonator cpw
         @return: ChipBuilder object for chaining
         """
+        segment_length = segment_length or self.default_resonator_params.segment_length
+        y_offset = y_offset or self.default_resonator_params.y_offset
+        q_ext = q_ext or self.default_resonator_params.coupling_length  # q_ext is being saved in coupling length
+        coupling_ground = coupling_ground or self.default_resonator_params.coupling_ground
+        radius = radius or self.default_resonator_params.radius
+        shorted = shorted or self.default_resonator_params.shorted
+        width = width or self.default_resonator_params.width
+        gap = gap or self.default_resonator_params.gap
+        ground = ground or self.default_resonator_params.ground
+        hole = hole or self.default_resonator_params.hole
+
         # save q_ext in coupling length - dirty, but more compact than saving a new variable
         self.default_resonator_params = HangingResonatorParams(segment_length, 5000, segment_length, y_offset, q_ext,
                                                                  coupling_ground, radius, shorted, self.width, self.gap,
