@@ -12,6 +12,7 @@ from src.library.KLayout.EndHooks import *
 from src.library.KLayout.Hallbar import *
 from src.library.KLayout.Airbridge import *
 from src.library.KLayout.AirbridgeRound import *
+from src.library.KLayout.QRCode import *
 from src.legacy.HangingResonatorOld import *
 from src.library.KLayout.Finger import *
 
@@ -38,6 +39,7 @@ class Main(pya.Library):
         self.layout().register_pcell("Hallbar", Hallbar())
         self.layout().register_pcell("Airbridge", Airbridge())
         self.layout().register_pcell("AirbridgeRound", AirbridgeRound())
+        self.layout().register_pcell("QRCode", QRCode())
         self.layout().register_pcell("Finger", Finger())
 
         self.register("QC")
