@@ -25,7 +25,7 @@ class ChipBuilder():
                          templates/ChipTemplates.py
         """
         # parameter declaration
-        self.chip_size = (10000, 6000)
+        self.chip_size = (8000, 4500)
         self.width = 10
         self.gap = 6
         self.ground = 10
@@ -40,6 +40,7 @@ class ChipBuilder():
         self.global_rotation = 0
 
         self.airbridge_params = None
+        self.finger_params = None
         self.default_resonator_params = HangingResonatorParams(950, 5000, 950, 300, 5e5, 20, 100, 1, 10, 6, 10, 6, 10,
                                                                40)
 
@@ -52,6 +53,29 @@ class ChipBuilder():
         self.lay = None
         self.top = None
         self.dbu = None
+
+    def set_finger_parameters(self, amount=5, spacing=50, width=10, gap=6, ground=10, hole=40, f_len=20, f_w=16, notch_w=5, notch_d=8, jj_len=12, jj_w=0.9, jj_d=0.5, b_d_f=0.4, b_d_jj=0.2) -> ChipBuilder:
+        """
+        Set the parameters for the fingers
+        @param amount: amount of finger pairs
+        @param spacing: spacing between fingers
+        @param width: width of the resonator
+        @param gap: gap of the resonator
+        @param ground: ground length of the resonator
+        @param hole: hole length of the resonator
+        @param f_len: length of the finger
+        @param f_w: width of the finger
+        @param notch_w: width of the notch
+        @param notch_d: depth of the notch
+        @param jj_len: length of the JJ electrode
+        @param jj_w: width of the JJ electrode
+        @param jj_d: distance of the JJ to the notch
+        @param b_d_f: distance of the bandage to finger border
+        @param b_d_jj: distance of the bandage to JJ border
+        @return: ChipBuilder object for chaining
+        """
+        self.finger_params = FingerParams(amount, spacing, width, gap, ground, hole, f_len, f_w, notch_w, notch_d, jj_len, jj_w, jj_d, b_d_f, b_d_jj)
+        return self
 
     def set_airbridge_parameters(self, pad_width=40, pad_height=30, gap=35, bridge_pad_width=30, bridge_pad_height=20,
                                  bridge_width=15, spacing=500) -> ChipBuilder:
@@ -532,6 +556,24 @@ class ChipBuilder():
                     trans = pya.DCplxTrans.new(1, 0, not up, 0, 0)*pya.DCplxTrans.new(1, rot, 0, x+x_prog, y)
                     self.top.insert(pya.DCellInstArray(ab_cell.cell_index(), trans))
 
+            # fingers
+
+            if self.finger_params is not None:
+
+                finger_cell = self.lay.create_cell("Finger", "QC", self.finger_params.as_list())
+                len_start = res.coupling_length + np.pi*res.radius/2 + res.y_offset/2
+
+                for z in np.linspace(len_start/res.length,
+                                     (len_start+self.finger_params.spacing*self.finger_params.amount)/res.length,
+                                     self.finger_params.amount):
+
+                    if res.length*(1-z) < 200:  # too close to end of resonator
+                        continue
+
+                    x, y, rot = HangingResonator.get_coord(z, pya.DPoint(0, 0), 0, res)
+                    trans = pya.DCplxTrans.new(1, 0, not up, 0, 0)*pya.DCplxTrans.new(1, rot, 0, x+x_prog, y)
+                    self.top.insert(pya.DCellInstArray(finger_cell.cell_index(), trans))
+
             up = not up
 
     def _write_holes(self):
@@ -670,6 +712,8 @@ class ChipBuilder():
         l1 = self.lay.layer(pya.LayerInfo(1, 0))  # main structure
         l2 = self.lay.layer(pya.LayerInfo(2, 0))  # text mask
         l3 = self.lay.layer(pya.LayerInfo(3, 0))  # chip border for holes
+        l5 = self.lay.layer(pya.LayerInfo(5, 0))  # jj electrodes
+        l6 = self.lay.layer(pya.LayerInfo(6, 0))  # bandages
         l10 = self.lay.layer(pya.LayerInfo(10, 0))  # spacing
         l11 = self.lay.layer(pya.LayerInfo(11, 0))  # high density hole mask
         l12 = self.lay.layer(pya.LayerInfo(12, 0))  # periodic holes
@@ -677,12 +721,20 @@ class ChipBuilder():
         l14 = self.lay.layer(pya.LayerInfo(14, 0))  # logo background for removing periodic holes
         l15 = self.lay.layer(pya.LayerInfo(15, 0))  # airbridge contact pads
         l16 = self.lay.layer(pya.LayerInfo(16, 0))  # airbridge bridges (negative resist)
+        l110 = self.lay.layer(pya.LayerInfo(110, 0))    # finger (remove resonator gap)
 
         # flatten, otherwise boolean operations won't work
         self.top.flatten(1)
 
         # prepare a shape processor
         processor = pya.ShapeProcessor()
+
+        # remove resonator gap for finger structures
+        processor.boolean(self.lay, self.top, l110, self.lay, self.top, l1, self.top.shapes(l1),
+                          pya.EdgeProcessor.ModeBNotA, True, True, True)
+        # place fingers into layer 10
+        processor.boolean(self.lay, self.top, l110, self.lay, self.top, l10, self.top.shapes(l10),
+                          pya.EdgeProcessor.ModeOr, True, True, True)
 
         # make sure ground is also at high density holes
         processor.boolean(self.lay, self.top, l11, self.lay, self.top, l10, self.top.shapes(l11),
@@ -731,6 +783,7 @@ class ChipBuilder():
         self.lay.clear_layer(l11)
         self.lay.clear_layer(l14)
         self.lay.clear_layer(l2)
+        self.lay.clear_layer(l110)
 
         self.lay.clear_layer(l0)
         self.lay.clear_layer(l12)

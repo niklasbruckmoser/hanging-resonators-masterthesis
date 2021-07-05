@@ -209,6 +209,30 @@ class HoleParams:
                 "sigma": self.sigma, "size": self.size}
 
 
+class FingerParams:
+    def __init__(self, amount=5, spacing=50, width=10, gap=6, ground=10, hole=40, f_len=20, f_w=16, notch_w=5, notch_d=8, jj_len=12, jj_w=0.9, jj_d=0.5, b_d_f=0.4, b_d_jj=0.2):
+        self.amount = amount
+        self.spacing = spacing
+        self.width = width
+        self.gap = gap
+        self.ground = ground
+        self.hole = hole
+        self.f_len = f_len
+        self.f_w = f_w
+        self.notch_w = notch_w
+        self.notch_d = notch_d
+        self.jj_len = jj_len
+        self.jj_w = jj_w
+        self.jj_d = jj_d
+        self.b_d_f = b_d_f
+        self.b_d_jj = b_d_jj
+
+    def as_list(self):
+        return {"amount": self.amount, "spacing": self.spacing, "width": self.width, "gap": self.gap, "ground": self.ground, "hole": self.hole,
+                "f_len": self.f_len, "f_w": self.f_w, "notch_w": self.notch_w, "notch_d": self.notch_d,
+                "jj_len": self.jj_len, "jj_w": self.jj_w, "jj_d": self.jj_d, "b_d_f": self.b_d_f, "b_d_jj": self.b_d_jj}
+
+
 class AirbridgeParams:
 
     def __init__(self, pad_width=100, pad_height=40, gap=35, bridge_pad_width=80, bridge_pad_height=20, bridge_width=40, spacing = 500):
