@@ -5,7 +5,7 @@ import numpy as np
 
 class StraightFingers(pya.PCellDeclarationHelper):
     """
-    Coplanar waveguide with fingers
+    Coplanar waveguide straight with fingers, deprecated
     """
 
     def __init__(self):

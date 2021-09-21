@@ -371,6 +371,3 @@ class ChipBuilder:
                                                         electrode_width, bridge_width, bridge_length))
 
         return params
-
-cb = ChipBuilder()
-cb.create_chip("marker_test", res_params=[], markers=True)

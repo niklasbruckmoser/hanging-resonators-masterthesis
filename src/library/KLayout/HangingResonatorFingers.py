@@ -14,7 +14,7 @@ from src.library.KLayout.EndHooks import create_end_hooks
 
 class HangingResonatorFingers(pya.PCellDeclarationHelper):
     """
-    Hanging Resonator with Fingers
+    Hanging Resonator with Fingers, deprecated
     """
 
     def __init__(self):

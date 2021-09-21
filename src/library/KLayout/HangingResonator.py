@@ -1,6 +1,6 @@
 import klayout.db as pya
 import numpy as np
-from src.library.KLayout.CellParams import HangingResonatorParams
+import src.library.Cells as Cells
 
 from src.library.KLayout.Straight import create_straight
 from src.library.KLayout.Curve import create_curve
@@ -126,7 +126,7 @@ def create_res(obj, start, rotation, segment_length, length, x_offset, y_offset,
         right = not right
 
 
-def get_coord(z, start, rotation, params: HangingResonatorParams) -> (float, float, float):
+def get_coord(z, start, rotation, params: Cells.Resonator) -> (float, float, float):
     """
     Get the coordinate depending on the progress (in percent, i.e. from 0 to 1)
     @param z: progress along the resonator, between 0 (start) and 1 (end)

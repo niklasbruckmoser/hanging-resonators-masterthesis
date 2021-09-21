@@ -2,7 +2,7 @@ from pathlib import Path
 
 import src.library.KLayout.Main
 import src.library.TextGen as TextGen
-from src.library.KLayout.CellParams import *
+from src.library.Cells import *
 
 
 class AirbridgeBuilder:
@@ -40,7 +40,6 @@ class AirbridgeBuilder:
 
         self._write_structures()
 
-        # self._write_text("30x25\n30x30\n30x35\n30x40\n30x45\n30x50\n20x25\n20x30\n20x35\n20x40\n20x45\n20x50\n10x25\n10x30\n10x35\n10x40\n10x45\n10x50\n20x25\n20x30\n20x35\n20x40\n20x45\n20x50\n9x25\n9x30\n9x35\n9x40\n9x45\n9x50\n20x25\n20x30\n20x35\n20x40\n20x45\n20x50\n")
         self._perform_boolean_operations()
         self._write_file(file_out)
 
@@ -59,7 +58,7 @@ class AirbridgeBuilder:
 
         x_prog = 0
 
-        values = [(5, 30), (10, 30), (15, 30), (20, 30)]  # amount
+        values = [(5, 30), (5, 40), (5, 50), (5, 70)]  # amount
 
         max_y = values[-1][0]*(values[-1][1]+straight_len)
 
@@ -71,12 +70,12 @@ class AirbridgeBuilder:
         m_lr_x = m_ul_x + 2600
         m_lr_y = m_ul_y - 2200
 
-        self._place_marker(m_ul_x, m_ul_y, 1)
-        self._place_marker(m_lr_x, m_lr_y, 1)
-        self._place_marker(m_ul_x, m_ul_y, 15)
-        self._place_marker(m_lr_x, m_lr_y, 15)
-        self._place_marker(m_ul_x, m_ul_y, 16)
-        self._place_marker(m_lr_x, m_lr_y, 16)
+        self._place_marker(m_ul_x, m_ul_y)
+        self._place_marker(m_lr_x, m_lr_y)
+        self._place_marker(m_ul_x, m_ul_y)
+        self._place_marker(m_lr_x, m_lr_y)
+        self._place_marker(m_ul_x, m_ul_y)
+        self._place_marker(m_lr_x, m_lr_y)
 
         text = TextGen.write_text(self.lay, f"2.6 2.2")
         TextGen.place_cell_center(self.lay, self.top, text, 1.5, m_ul_x+250, m_ul_y-70)
@@ -91,13 +90,13 @@ class AirbridgeBuilder:
 
             y_prog = 0
 
-            straight_params = StraightParams(straight_len, straight_w, straight_g, 0, 0)
-            straight = self.lay.create_cell("Straight", "QC", straight_params.as_list())
+            straight = Straight(straight_len, straight_w, straight_g, 0, 0)
+            straight_cell = self.lay.create_cell(straight.cell_name(), lib_name, straight.as_list())
 
-            port_params = CustomPortParams(200, 50, 50, 200, 0, straight_w, straight_g, 0, 0)
-            port = self.lay.create_cell("CustomPort", "QC", port_params.as_list())
+            port = CustomPort(200, 50, 50, 200, 0, straight_w, straight_g, 0, 0)
+            port_cell = self.lay.create_cell(port.cell_name(), lib_name, port.as_list())
             trans = pya.DCplxTrans.new(1, 90, False, x_prog, 0)
-            self.top.insert(pya.DCellInstArray(port.cell_index(), trans))
+            self.top.insert(pya.DCellInstArray(port_cell.cell_index(), trans))
 
             y_prog += 300
 
@@ -106,24 +105,24 @@ class AirbridgeBuilder:
             for y in range(amount):
 
                 trans = pya.DCplxTrans.new(1, 90, False, x_prog, y_prog)
-                self.top.insert(pya.DCellInstArray(straight.cell_index(), trans))
+                self.top.insert(pya.DCellInstArray(straight_cell.cell_index(), trans))
                 y_prog += straight_len
 
                 self.top.shapes(self.lay.layer(pya.LayerInfo(1, 0))).insert(
                     pya.Box((x_prog-straight_g-straight_w/2)/self.dbu, y_prog/self.dbu, (x_prog+straight_g+straight_w/2)/self.dbu, (y_prog+bridge_len)/self.dbu))
                 y_prog += bridge_len
 
-                bridge_params = AirbridgeParams(straight_w, straight_w*0.75, bridge_len, straight_w*0.75, straight_w*0.75*0.75, straight_w*0.65, 0)
-                bridge = self.lay.create_cell("Airbridge", "QC", bridge_params.as_list())
+                bridge = Airbridge(straight_w, straight_w*0.75, bridge_len, straight_w*0.75, straight_w*0.75*0.75, straight_w*0.65, 0)
+                bridge_cell = self.lay.create_cell(bridge.cell_name(), lib_name, bridge.as_list())
                 trans = pya.DCplxTrans.new(1, 0, False, x_prog, y_prog-bridge_len/2)
-                self.top.insert(pya.DCellInstArray(bridge.cell_index(), trans))
+                self.top.insert(pya.DCellInstArray(bridge_cell.cell_index(), trans))
 
             trans = pya.DCplxTrans.new(1, 90, False, x_prog, y_prog)
-            self.top.insert(pya.DCellInstArray(straight.cell_index(), trans))
+            self.top.insert(pya.DCellInstArray(straight_cell.cell_index(), trans))
             y_prog += straight_len
 
             trans = pya.DCplxTrans.new(1, 270, False, x_prog, y_prog+300)
-            self.top.insert(pya.DCellInstArray(port.cell_index(), trans))
+            self.top.insert(pya.DCellInstArray(port_cell.cell_index(), trans))
 
             text = TextGen.write_text(self.lay, f"{amount} bridges, l={bridge_len}")
             TextGen.place_cell_center(self.lay, self.top, text, 0.5, x_prog, y_prog + 320)
@@ -135,7 +134,7 @@ class AirbridgeBuilder:
             y_prog = 0
 
             trans = pya.DCplxTrans.new(1, 90, False, x_prog, 0)
-            self.top.insert(pya.DCellInstArray(port.cell_index(), trans))
+            self.top.insert(pya.DCellInstArray(port_cell.cell_index(), trans))
 
             y_prog += 300
 
@@ -143,15 +142,15 @@ class AirbridgeBuilder:
 
             total_len = amount*(bridge_len+straight_len) + straight_len
 
-            long_straight_params = straight_params
-            long_straight_params.length = total_len
-            long_straight = self.lay.create_cell("Straight", "QC", long_straight_params.as_list())
+            long_straight = straight
+            long_straight.length = total_len
+            long_straight = self.lay.create_cell(long_straight.cell_name(), lib_name, long_straight.as_list())
             trans = pya.DCplxTrans.new(1, 90, False, x_prog, y_prog)
             self.top.insert(pya.DCellInstArray(long_straight.cell_index(), trans))
             y_prog += total_len
 
             trans = pya.DCplxTrans.new(1, 270, False, x_prog, y_prog+300)
-            self.top.insert(pya.DCellInstArray(port.cell_index(), trans))
+            self.top.insert(pya.DCellInstArray(port_cell.cell_index(), trans))
 
             text = TextGen.write_text(self.lay, f"comparison structure")
             TextGen.place_cell_center(self.lay, self.top, text, 0.5, x_prog, y_prog + 320)
@@ -185,34 +184,32 @@ class AirbridgeBuilder:
         self.top.insert(pya.DCellInstArray(cell_wmi, trans))
 
 
-    def _place_marker(self, x, y, layer=1):
+    def _place_marker(self, x, y):
         """
         Subroutine for writing nanobeam markers on the chip
         """
         print("Writing markers...")
 
-        self.lay.read(f"../../templates/marker_LW.gds")
+        self.lay.read(f"../../templates/marker_AB_manual.gds")
         cell = self.lay.top_cells()[1].cell_index()
 
-        index = self.lay.layer(pya.LayerInfo(layer, 0))  # create new layer
-        self.lay.top_cells()[1].swap(0, index)
+        # index = self.lay.layer(pya.LayerInfo(layer, 0))  # create new layer
+        # self.lay.top_cells()[1].swap(0, index)
 
         trans = pya.DCplxTrans.new(1, 0, False, x, y)
         self.top.insert(pya.DCellInstArray(cell, trans))
         self.top.flatten(1)
 
-    def _write_text(self, text=None, frequencies=True):
+    def _write_text(self, text):
         """
         Subroutine for writing text on the chip.
-        :@param text: Text that will be printed on the chip. Set to None for printing the resonance frequencies
+        :@param text: Text that will be printed on the chip.
         """
         print("Writing text...")
 
-        if text is None:
-            text = ""
         lines = text.splitlines()
 
-        y_shift = (-self.chip_height/2)  / self.dbu
+        y_shift = (-self.chip_height/2) / self.dbu
 
         for line in lines:
             text = TextGen.write_text(self.lay, line)
@@ -297,4 +294,4 @@ class AirbridgeBuilder:
 
 
 ab = AirbridgeBuilder()
-ab.create_chip("airbridge_array_v3")
+ab.create_chip("airbridge_array_30to70")

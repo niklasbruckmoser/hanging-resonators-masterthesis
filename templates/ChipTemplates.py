@@ -1,6 +1,5 @@
 from src.ChipBuilder import ChipBuilder
 
-
 """
 Chip templates for fast initialization.
 Initialize the ChipBuilder object with the method name as a String argument.
@@ -131,12 +130,94 @@ def template_W7_6x10(obj: ChipBuilder):
 
 def template_B60_1_wet_etching(obj: ChipBuilder):
     """
-    Template for a 10x6 wmi chip. Initialize with "10x6_single"
+    Template for the B60-1 chip
     """
     obj.set_chip_size(8000, 4500).set_TL_width(10).set_TL_gap(6)
     obj.set_TL_ground(50).set_TL_hole(40).set_hole_mask("hole_mask_small")
     obj.set_port_parameters(160, 200, 300, 100)
-    obj.set_default_resonator_parameters(500, 150, 5e5, 20, 100, 1, 10, 6, 10, 40)
+    obj.set_default_resonator_parameters(550, 150, 5e5, 20, 100, 1, 10, 6, 10, 40)
     obj.set_logo('ur', "logo_mcqst", 0.4, 200).set_logo('ul', "logo_wmi", 0.5, 200)
     obj.set_eps_eff(6.45)
     obj.set_text("´f0´ (GHz): $FREQUENCIES$", False)
+
+
+def template_B64(obj: ChipBuilder):
+    """
+    Template for the B60-1 chip
+    """
+    obj.set_chip_size(8000, 4500).set_TL_width(10).set_TL_gap(6)
+    obj.set_TL_ground(50).set_TL_hole(40).set_hole_mask("hole_mask_small")
+    obj.set_port(160, 200, 300, 100)
+    obj.set_default_resonator(550, 150, 5e5, 20, 100, 1, 10, 6, 10, 40)
+    obj.set_logo('ur', "logo_mcqst", 0.4, 200).set_logo('ul', "logo_wmi", 0.5, 200)
+    obj.set_eps_eff(6.45)
+    obj.set_global_rotation(90)
+    obj.set_marker('all', "marker_LW", 0, [1])
+    obj.set_text("´f0´ (GHz): $FREQUENCIES$", False)
+
+def template_B72_HF(obj: ChipBuilder):
+    """
+    Template for B72 high frequency chips
+    """
+    obj.set_chip_size(8000, 4500).set_TL_width(10).set_TL_gap(6)
+    obj.set_TL_ground(50).set_TL_hole(40).set_hole_mask("hole_mask_small")
+    obj.set_port(160, 200, 300, 100)
+    obj.set_default_resonator(1, 150, 5e5, 20, 100, 1, 10, 6, 10, 40)
+    obj.set_logo('ur', "logo_mcqst", 0.4, 200).set_logo('ul', "logo_wmi", 0.5, 200)
+    obj.set_eps_eff(6.45)
+    obj.set_global_rotation(90)
+    obj.set_text("´f0´ (GHz): $FREQUENCIES$", False)
+
+def template_B72_AB(obj: ChipBuilder):
+    """
+    Template for the B60-1 chip
+    """
+    obj.set_chip_size(8000, 4500).set_TL_width(10).set_TL_gap(6)
+    obj.set_TL_ground(50).set_TL_hole(40).set_hole_mask("hole_mask_small")
+    obj.set_port(160, 200, 300, 100)
+    obj.set_default_resonator(550, 150, 5e5, 20, 100, 1, 10, 6, 10, 40)
+    obj.set_logo('ur', "logo_mcqst", 0.4, 200).set_logo('ul', "logo_wmi", 0.5, 200)
+    obj.set_eps_eff(6.45)
+    obj.set_global_rotation(90)
+    obj.set_marker('all', "marker_AB_manual", 0, [1])
+    obj.set_text("´f0´ (GHz): $FREQUENCIES$", False)
+
+def template_B72_Al2O3(obj: ChipBuilder):
+    """
+    Template for B72-3 sapphire chip
+    """
+    obj.set_chip_size(8000, 4500).set_TL_width(10).set_TL_gap(6)
+    obj.set_TL_ground(50).set_TL_hole(40).set_hole_mask("hole_mask_small")
+    obj.set_port(160, 200, 300, 100)
+    obj.set_default_resonator(550, 150, 5e5, 20, 100, 1, 10, 6, 10, 40)
+    obj.set_logo('ur', "logo_mcqst", 0.4, 200).set_logo('ul', "logo_wmi", 0.5, 200)
+    obj.set_eps_eff((9.27+1)/2)
+    obj.set_global_rotation(90)
+    obj.set_text("´f0´ (GHz): $FREQUENCIES$", False)
+
+def template_B72_control(obj: ChipBuilder):
+    """
+    Template for the B72-4 control chip
+    """
+    obj.set_chip_size(8000, 4500).set_TL_width(10).set_TL_gap(6)
+    obj.set_TL_ground(50).set_TL_hole(40).set_hole_mask("hole_mask_small")
+    obj.set_port(160, 200, 300, 100)
+    obj.set_default_resonator(550, 150, 5e5, 20, 100, 1, 10, 6, 10, 40)
+    obj.set_logo('ur', "logo_mcqst", 0.4, 200).set_logo('ul', "logo_wmi", 0.5, 200)
+    obj.set_eps_eff(6.45)
+    obj.set_global_rotation(90)
+    obj.set_text("´f0´ (GHz): $FREQUENCIES$", False)
+
+#
+# def template_P10(obj: ChipBuilderNew):
+#     """
+#     Template for the P10 surface treatment chips
+#     """
+#     obj.set_chip_size(8000, 4500).set_TL_width(10).set_TL_gap(6)
+#     obj.set_TL_ground(50).set_TL_hole(40).set_hole_mask("hole_mask_small")
+#     obj.set_port(160, 200, 300, 100)
+#     obj.set_default_resonator(550, 150, 5e5, 20, 100, 1, 10, 6, 10, 40)
+#     obj.set_logo('ur', "logo_mcqst", 0.4, 200).set_logo('ul', "logo_wmi", 0.5, 200)
+#     obj.set_eps_eff(6.45)
+#     obj.set_global_rotation(90)
+#     obj.set_text("´f0´ (GHz): $FREQUENCIES$", False)

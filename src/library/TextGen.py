@@ -1,7 +1,7 @@
 import klayout.db as pya
 
 """
-Quick and dirty text generator
+Quick and dirty text generator using the custom font
 """
 
 
@@ -12,7 +12,7 @@ def write_text(layout, text, font="circular_font", buffer_trigger="´") -> pya.C
     @param layout: layout to be used for the cell
     @param text: text to write
     @param font: font to be used, currently only "circular_font" exists
-    @param buffer_trigger: trigger for the buffer
+    @param buffer_trigger: trigger for the buffer, should be a character without any practical use
     @return: a cell object
     """
     # auxilliary layout for font loading

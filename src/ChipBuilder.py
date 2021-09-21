@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 from pathlib import Path
-
 import numpy as np
 
-import src.library.KLayout.HangingResonator as HangingResonator
+import src.library.KLayout.HangingResonator as HangingResonatorCell
 import src.library.KLayout.Main
 import src.library.TextGen as TextGen
-from src.library.KLayout.CellParams import *
+from src.library.Cells import *
 import src.library.ResonatorUtil as Util
 
 
@@ -16,7 +15,7 @@ Class for creating resonator chips. All length units are assumed to be in µm, f
 """
 
 
-class ChipBuilder():
+class ChipBuilder:
 
     def __init__(self, template=None):
         """
@@ -31,30 +30,33 @@ class ChipBuilder():
         self.ground = 10
         self.hole = 40
         self.eps_eff = 6.45
-        self.port_params = PortParams(160, 200, 300, 100, self.width, self.gap, self.ground, self.hole)
+        self.port = Port(160, 200, 300, 100, self.width, self.gap, self.ground, self.hole)
         self.hole_mask = "hole_mask_small"
-        self.resonator_list = []
+        self.resonator_list = []  # structure: list of resonator parameters
+        self.decorator_list = []  # structure: containing lists of decorators, e.g. air bridges etc
         self.logo_list = {}
         self.marker_list = {}
         self.text = "´f0´ (GHz): $FREQUENCIES$"
         self.global_rotation = 0
 
-        self.airbridge_params = None
-        self.finger_params = None
-        self.default_resonator_params = HangingResonatorParams(950, 5000, 950, 300, 5e5, 20, 100, 1, 10, 6, 10, 6, 10,
-                                                               40)
+        self.tl_airbridges = False
+
+        self.default_finger: Finger
+        self.set_default_finger()
+        self.default_airbridge: Airbridge
+        self.set_default_airbridge()
+        self.default_resonator = HangingResonator(950, 5000, 950, 300, 5e5, 20, 100, 1, 10, 6, 10, 6, 10, 40)
 
         # init from template
         if template is not None:
             import templates.ChipTemplates as CT
             getattr(CT, f"{template}")(self)
 
-
         self.lay = None
         self.top = None
         self.dbu = None
 
-    def set_finger_parameters(self, amount=5, spacing=50, width=10, gap=6, ground=10, hole=40, f_len=20, f_w=16, notch_w=5, notch_d=8, jj_len=12, jj_w=0.9, jj_d=0.5, b_d_f=0.4, b_d_jj=0.2) -> ChipBuilder:
+    def set_default_finger(self, amount=5, spacing=50, width=10, gap=6, ground=10, hole=40, f_len=20, f_w=16, notch_w=5, notch_d=8, jj_len=12, jj_w=0.9, jj_d=0.5, b_d_f=0.4, b_d_jj=0.2, finger=None) -> ChipBuilder:
         """
         Set the parameters for the fingers
         @param amount: amount of finger pairs
@@ -74,11 +76,14 @@ class ChipBuilder():
         @param b_d_jj: distance of the bandage to JJ border
         @return: ChipBuilder object for chaining
         """
-        self.finger_params = FingerParams(amount, spacing, width, gap, ground, hole, f_len, f_w, notch_w, notch_d, jj_len, jj_w, jj_d, b_d_f, b_d_jj)
+        if finger is not None:
+            self.default_finger = finger
+        else:
+            self.default_finger = Finger(amount, spacing, width, gap, ground, hole, f_len, f_w, notch_w, notch_d, jj_len, jj_w, jj_d, b_d_f, b_d_jj)
         return self
 
-    def set_airbridge_parameters(self, pad_width=40, pad_height=30, gap=35, bridge_pad_width=30, bridge_pad_height=20,
-                                 bridge_width=15, spacing=500) -> ChipBuilder:
+    def set_default_airbridge(self, pad_width=22, pad_height=22, gap=40, bridge_pad_width=18,
+                              bridge_pad_height=18, bridge_width=18, spacing=500, airbridge=None) -> ChipBuilder:
         """
         Set the parameters for the air bridges
         @param pad_width: width of the reflow pad
@@ -90,24 +95,23 @@ class ChipBuilder():
         @param spacing: spacing between individual air bridges at a resonator
         @return: ChipBuilder object for chaining
         """
-        self.airbridge_params = AirbridgeParams(pad_width, pad_height, gap, bridge_pad_width, bridge_pad_height,
-                                                bridge_width, spacing)
+        if airbridge is not None:
+            self.default_airbridge = airbridge
+        else:
+            self.default_airbridge = Airbridge(pad_width, pad_height, gap, bridge_pad_width,
+                                               bridge_pad_height, bridge_width, spacing)
         return self
 
     def set_airbridges(self, boolean: bool) -> ChipBuilder:
         """
         Enable or disable air bridges
-        @param boolean: True for enabling airbridges
+        @param boolean: True for enabling transmission line airbridges
         @return: ChipBuilder object for chaining
         """
-        if boolean is False:
-            self.airbridge_params = None
-        else:
-            if self.airbridge_params is None:
-                self.set_airbridge_parameters()
+        self.tl_airbridges = boolean
         return self
 
-    def set_port_parameters(self, width_port=160, length_taper=200, length_port=300, spacing=100) -> ChipBuilder:
+    def set_port(self, width_port=160, length_taper=200, length_port=300, spacing=100, port=None) -> ChipBuilder:
         """
         Set the parameters for the transmission line ports
         @param width_port: width of the port
@@ -116,19 +120,22 @@ class ChipBuilder():
         @param spacing: spacing to the borders (without ground and holes)
         @return: ChipBuilder object for chaining
         """
-        self.port_params = PortParams(width_port, length_taper, length_port, spacing, self.width, self.gap,
-                                      self.ground, self.hole)
+        if port is not None:
+            self.port = port
+        else:
+            self.port = Port(width_port, length_taper, length_port, spacing, self.width, self.gap,
+                             self.ground, self.hole)
         return self
 
-    def _re_init_port_parameters(self):
+    def _re_init_port(self):
         """
         Reinitialize the port parameters after changing width, gap, ground or hole
         """
-        width_port = self.port_params.width_port
-        length_taper = self.port_params.length_taper
-        length_port = self.port_params.length_port
-        spacing = self.port_params.spacing
-        self.set_port_parameters(width_port, length_taper, length_port, spacing)
+        width_port = self.port.width_port
+        length_taper = self.port.length_taper
+        length_port = self.port.length_port
+        spacing = self.port.spacing
+        self.set_port(width_port, length_taper, length_port, spacing)
 
     def set_TL_width(self, width: float) -> ChipBuilder:
         """
@@ -137,7 +144,7 @@ class ChipBuilder():
         @return: ChipBuilder object for chaining
         """
         self.width = width
-        self._re_init_port_parameters()
+        self._re_init_port()
         return self
 
     def set_TL_gap(self, gap: float) -> ChipBuilder:
@@ -147,7 +154,7 @@ class ChipBuilder():
         @return: ChipBuilder object for chaining
         """
         self.gap = gap
-        self._re_init_port_parameters()
+        self._re_init_port()
         return self
 
     def set_TL_ground(self, ground: float) -> ChipBuilder:
@@ -157,7 +164,7 @@ class ChipBuilder():
         @return: ChipBuilder object for chaining
         """
         self.ground = ground
-        self._re_init_port_parameters()
+        self._re_init_port()
         return self
 
     def set_TL_hole(self, hole: float) -> ChipBuilder:
@@ -167,7 +174,7 @@ class ChipBuilder():
         @return: ChipBuilder object for chaining
         """
         self.hole = hole
-        self._re_init_port_parameters()
+        self._re_init_port()
         return self
 
     def set_chip_size(self, width: float, height: float) -> ChipBuilder:
@@ -312,9 +319,9 @@ class ChipBuilder():
             self.text = text
         return self
 
-    def set_default_resonator_parameters(self, segment_length=None, y_offset=None, q_ext=None, coupling_ground=None,
-                                         radius=None, shorted=None, width=None, gap=None, ground=None,
-                                         hole=None) -> ChipBuilder:
+    def set_default_resonator(self, segment_length=None, y_offset=None, q_ext=None, coupling_ground=None,
+                              radius=None, shorted=None, width=None, gap=None, ground=None,
+                              hole=None, resonator=None) -> ChipBuilder:
         """
         Set default fallback resonator parameters
         @param segment_length: length of the x straight
@@ -329,44 +336,30 @@ class ChipBuilder():
         @param hole: high density hole width of the resonator cpw
         @return: ChipBuilder object for chaining
         """
-        segment_length = segment_length or self.default_resonator_params.segment_length
-        y_offset = y_offset or self.default_resonator_params.y_offset
-        q_ext = q_ext or self.default_resonator_params.coupling_length  # q_ext is being saved in coupling length
-        coupling_ground = coupling_ground or self.default_resonator_params.coupling_ground
-        radius = radius or self.default_resonator_params.radius
-        shorted = shorted or self.default_resonator_params.shorted
-        width = width or self.default_resonator_params.width
-        gap = gap or self.default_resonator_params.gap
-        ground = ground or self.default_resonator_params.ground
-        hole = hole or self.default_resonator_params.hole
 
-        # save q_ext in coupling length - dirty, but more compact than saving a new variable
-        self.default_resonator_params = HangingResonatorParams(segment_length, 5000, segment_length, y_offset, q_ext,
-                                                                 coupling_ground, radius, shorted, self.width, self.gap,
-                                                                 width, gap, ground, hole)
+        if resonator is not None:
+            self.default_resonator = resonator
+        else:
+            segment_length = segment_length or self.default_resonator.segment_length
+            y_offset = y_offset or self.default_resonator.y_offset
+            q_ext = q_ext or self.default_resonator.coupling_length  # q_ext is being saved in coupling length
+            coupling_ground = coupling_ground or self.default_resonator.coupling_ground
+            radius = radius or self.default_resonator.radius
+            shorted = shorted or self.default_resonator.shorted
+            width = width or self.default_resonator.width
+            gap = gap or self.default_resonator.gap
+            ground = ground or self.default_resonator.ground
+            hole = hole or self.default_resonator.hole
+
+            # save q_ext in coupling length - dirty, but more compact than saving a new variable
+            self.default_resonator = HangingResonator(segment_length, 5000, segment_length, y_offset, q_ext,
+                                                      coupling_ground, radius, shorted, self.width, self.gap,
+                                                      width, gap, ground, hole)
         return self
 
-    def add_resonator(self, res_params: HangingResonatorParams) -> ChipBuilder:
-        """
-        Add a resonator to the chip
-        @param res_params: a ResonatorParams object containing all the parameters
-        @return: ChipBuilder object for chaining
-        """
-        self.resonator_list.append(res_params)
-        return self
-
-    def set_resonator_list(self, res_param_list: [HangingResonatorParams]) -> ChipBuilder:
-        """
-        Set the whole list of resonators for the chip
-        @param res_param_list: a list containing all ResonatorParams objects
-        @return: ChipBuilder object for chaining
-        """
-        self.resonator_list = res_param_list
-        return self
-
-    def get_resonator(self, f0: float, segment_length=None, y_offset=None, q_ext=None, coupling_ground=None,
+    def add_resonator(self, f0: float, segment_length=None, y_offset=None, q_ext=None, coupling_ground=None,
                       radius=None, shorted=None, width=None, gap=None, ground=None,
-                      hole=None) -> HangingResonatorParams:
+                      hole=None, resonator=None) -> int:
         """
         Create a ResonatorParams object
         @param f0: the resonance frequency (assuming lambda/4 resonator) TODO change in the future? prob. not necessary
@@ -380,31 +373,55 @@ class ChipBuilder():
         @param gap: gap of the resonator cpw
         @param ground: ground width of the resonator cpw
         @param hole: high density hole width of the resonator cpw
-        @return: a ResonatorParams object
+        @return: Position of the added resonator in the resonator list
         """
-        # initialize values from default resonator params
-        segment_length = segment_length or self.default_resonator_params.segment_length
-        y_offset = y_offset or self.default_resonator_params.y_offset
-        q_ext = q_ext or self.default_resonator_params.coupling_length  # q_ext is being saved in coupling length
-        coupling_ground = coupling_ground or self.default_resonator_params.coupling_ground
-        radius = radius or self.default_resonator_params.radius
-        shorted = shorted or self.default_resonator_params.shorted
-        width = width or self.default_resonator_params.width
-        gap = gap or self.default_resonator_params.gap
-        ground = ground or self.default_resonator_params.ground
-        hole = hole or self.default_resonator_params.hole
+        if resonator is not None:
+            self.resonator_list.append(resonator)
+        else:
+            # initialize values from default resonator params
+            segment_length = segment_length or self.default_resonator.segment_length
+            y_offset = y_offset or self.default_resonator.y_offset
+            q_ext = q_ext or self.default_resonator.coupling_length  # q_ext is being saved in coupling length
+            coupling_ground = coupling_ground or self.default_resonator.coupling_ground
+            radius = radius or self.default_resonator.radius
+            shorted = shorted or self.default_resonator.shorted
+            width = width or self.default_resonator.width
+            gap = gap or self.default_resonator.gap
+            ground = ground or self.default_resonator.ground
+            hole = hole or self.default_resonator.hole
 
-        length = Util.calc_length(f0, self.eps_eff) / 1000
-        coupling_length = Util.calc_coupling_length(self.width, self.gap, width, gap, coupling_ground, length, q_ext,
-                                                    self.eps_eff)
+            length = Util.calc_length(f0, self.eps_eff) / 1000
+            coupling_length = Util.calc_coupling_length(self.width, self.gap, width, gap, coupling_ground, length, q_ext,
+                                                        self.eps_eff)
 
-        return HangingResonatorParams(segment_length, length, segment_length, y_offset, coupling_length,
-                                        coupling_ground, radius, shorted, self.width, self.gap, width, gap, ground,
-                                        hole)
+            self.resonator_list.append(HangingResonator(segment_length, length, segment_length, y_offset, coupling_length,
+                                                        coupling_ground, radius, shorted, self.width, self.gap, width, gap, ground,
+                                                        hole))
+        return len(self.resonator_list)-1
 
-    def get_resonator_list(self, f0_start: float, f0_end: float, amount_resonators: int, segment_length=None,
+    def add_decorator(self, position, *args):
+        """
+        Add a decorator to a specific resonator, given by the position
+        @param position: resonator position in self.resonator_list
+        @param args: (tuple of) decorator(s) for the resonator
+        """
+        if not hasattr(args, '__len__'):
+            args = (args,)
+        for arg in args:
+            if not isinstance(arg, Decorator):
+                raise ValueError(f"Unknown decorator of type '{type(arg)}'!")
+
+        # set decorator at given position and extend list if necessary
+        try:
+            self.decorator_list[position] = args
+        except IndexError:  # list too short yet
+            for _ in range(position-len(self.decorator_list)+1):
+                self.decorator_list.append(None)
+            self.decorator_list[position] = args
+
+    def add_resonator_list(self, f0_start: float, f0_end: float, amount_resonators: int, segment_length=None,
                            y_offset=None, q_ext=None, coupling_ground=None, radius=None, shorted=None, width=None,
-                           gap=None, ground=None, hole=None) -> [HangingResonatorParams]:
+                           gap=None, ground=None, hole=None, resonator_list=None) -> ChipBuilder:
         """
         Get a list of resonator params
         @param f0_start: the start resonance frequency (assuming lambda/4)
@@ -422,22 +439,14 @@ class ChipBuilder():
         @param hole: high density hole width of the resonator cpw
         @return:
         """
-        param_list = []
-        interval = (f0_end - f0_start) / (amount_resonators - 1)
-        for i in range(amount_resonators):
-            f0 = f0_start + i*interval
-            param_list.append(self.get_resonator(f0, segment_length, y_offset, q_ext, coupling_ground, radius,
-                                                 shorted, width, gap, ground, hole))
-
-        return param_list
-
-    #####################
-    ###               ###
-    ### Template list ###
-    ###               ###
-    #####################
-
-    # shifted to ChipTemplates
+        if resonator_list is not None:
+            self.resonator_list = resonator_list
+        else:
+            interval = (f0_end - f0_start) / (amount_resonators - 1)
+            for i in range(amount_resonators):
+                f0 = f0_start + i*interval
+                self.add_resonator(f0, segment_length, y_offset, q_ext, coupling_ground, radius, shorted, width, gap, ground, hole)
+        return self
 
     #######################
     ###                 ###
@@ -455,6 +464,7 @@ class ChipBuilder():
 
         self.lay = pya.Layout()
         self.top = self.lay.create_cell("TOP")
+        # self.lay.dbu = 1
         self.dbu = self.lay.dbu
 
         self._write_structures()
@@ -483,28 +493,29 @@ class ChipBuilder():
         ### TL
 
         x_prog = -self.chip_size[0]/2
-        port = self.lay.create_cell("Port", "QC", self.port_params.as_list())
+        port_cell = self.lay.create_cell(self.port.cell_name(), lib_name, self.port.as_list())
         trans = pya.DCplxTrans.new(1, 0, False, x_prog, 0)
-        self.top.insert(pya.DCellInstArray(port.cell_index(), trans))
+        self.top.insert(pya.DCellInstArray(port_cell.cell_index(), trans))
 
-        port_len = self.port_params.end_point().x
+        port_len = self.port.end_point().x
         x_prog += port_len
 
         tl_len = self.chip_size[0] - 2*port_len
 
-        straight_params = StraightParams(tl_len, self.width, self.gap, self.ground, self.hole)
-        straight = self.lay.create_cell("Straight", "QC", straight_params.as_list())
+        straight = Straight(tl_len, self.width, self.gap, self.ground, self.hole)
+        straight_cell = self.lay.create_cell(straight.cell_name(), lib_name, straight.as_list())
         trans = pya.DCplxTrans.new(1, 0, False, x_prog, 0)
-        self.top.insert(pya.DCellInstArray(straight.cell_index(), trans))
-        x_prog += straight_params.end_point().x
+        self.top.insert(pya.DCellInstArray(straight_cell.cell_index(), trans))
+        x_prog += straight.end_point().x
 
-        port = self.lay.create_cell("Port", "QC", self.port_params.as_list())
+        port_cell = self.lay.create_cell(self.port.cell_name(), lib_name, self.port.as_list())
         trans = pya.DCplxTrans.new(1, 180, False, x_prog+port_len, 0)
-        self.top.insert(pya.DCellInstArray(port.cell_index(), trans))
+        self.top.insert(pya.DCellInstArray(port_cell.cell_index(), trans))
 
         ### Resonators
 
         safe_zone = 0
+
         for res in self.resonator_list:
             new_sz = res.segment_length + 2*(res.radius + res.ground + res.hole + res.gap + res.width/2)
             safe_zone = new_sz if new_sz > safe_zone else safe_zone
@@ -517,62 +528,68 @@ class ChipBuilder():
 
         x_prog = -tl_len/2
 
-        for res in self.resonator_list:
+        for i in range(len(self.resonator_list)):
+            res: Resonator
+            res = self.resonator_list[i]
+
+            decorators: (Decorator,)  # air bridges, fingers, etc in list
+            try:
+                decorators = self.decorator_list[i]
+                if decorators is None:
+                    decorators = ()
+            except IndexError:
+                decorators = ()
 
             x_prog += safe_zone/2
-            if type(res) == HangingResonatorParams:
-                res_cell = self.lay.create_cell("HangingResonator", "QC", res.as_list())
-            elif type(res) == HangingResonatorFingersParams:
-                res_cell = self.lay.create_cell("HangingResonatorFingers", "QC", res.as_list())
-            elif type(res) == HangingResonatorOldParams:
-                res_cell = self.lay.create_cell("HangingResonatorOld", "QC", res.as_list())
+
+            if isinstance(res, Resonator):
+                res_cell = self.lay.create_cell(res.cell_name(), lib_name, res.as_list())
             else:
-                raise ValueError(f"Unknown type {type(res)} as resonator parameters")
-            trans = pya.DCplxTrans.new(1, 0, not up, x_prog, 0)
-            self.top.insert(pya.DCellInstArray(res_cell.cell_index(), trans))
+                raise ValueError(f"Unknown resonator type {type(res)}")
 
-            # air bridges
-
-            if self.airbridge_params is not None:
-
-                # TL airbridges
-                ab_pos = x_prog + res.radius + res.segment_length/2 + 100
-                ab_cell = self.lay.create_cell("Airbridge", "QC", self.airbridge_params.as_list())
+            # TL air bridges
+            if self.tl_airbridges is True:
+                ab_pos = x_prog + res.radius + res.segment_length/2 + 40
+                ab_cell = self.lay.create_cell(self.default_airbridge.cell_name(), lib_name, self.default_airbridge.as_list())
                 trans = pya.DCplxTrans.new(1, 0, False, ab_pos, 0)
                 self.top.insert(pya.DCellInstArray(ab_cell.cell_index(), trans))
 
-                # resonator airbridges
-                len_start = res.coupling_length + np.pi*res.radius/2 + res.y_offset/2
-                amount_bridges = int(np.floor((res.length-len_start)/self.airbridge_params.spacing))
+            # Resonator
+            trans = pya.DCplxTrans.new(1, 0, not up, x_prog, 0)
+            self.top.insert(pya.DCellInstArray(res_cell.cell_index(), trans))
 
-                for z in np.linspace(len_start/res.length,
-                                     (len_start+self.airbridge_params.spacing*amount_bridges)/res.length,
-                                     amount_bridges):
+            # Resonator decorators
+            for decorator in decorators:
+                if isinstance(decorator, Airbridge):
+                    ab_cell = self.lay.create_cell(decorator.cell_name(), lib_name, decorator.as_list())
+                    len_start = res.coupling_length + np.pi*res.radius/2 + res.y_offset/2
+                    amount_bridges = int(np.floor((res.length-len_start)/decorator.spacing))
 
-                    if res.length*(1-z) < 200:  # too close to end of resonator
-                        continue
+                    for z in np.linspace(len_start/res.length,
+                                         (len_start+decorator.spacing*amount_bridges)/res.length,
+                                         amount_bridges):
+                        if res.length*(1-z) < 200:  # too close to end of resonator
+                            continue
+                        x, y, rot = HangingResonatorCell.get_coord(z, pya.DPoint(0, 0), 0, res)
+                        trans = pya.DCplxTrans.new(1, 0, not up, 0, 0)*pya.DCplxTrans.new(1, rot, 0, x+x_prog, y)
+                        self.top.insert(pya.DCellInstArray(ab_cell.cell_index(), trans))
 
-                    x, y, rot = HangingResonator.get_coord(z, pya.DPoint(0, 0), 0, res)
-                    trans = pya.DCplxTrans.new(1, 0, not up, 0, 0)*pya.DCplxTrans.new(1, rot, 0, x+x_prog, y)
-                    self.top.insert(pya.DCellInstArray(ab_cell.cell_index(), trans))
+                elif isinstance(decorator, Finger):
+                    finger_cell = self.lay.create_cell(decorator.cell_name(), lib_name, decorator.as_list())
+                    len_start = res.coupling_length + np.pi*res.radius/2 + res.y_offset/2
 
-            # fingers
+                    for z in np.linspace(len_start/res.length, (len_start+decorator.spacing*
+                                                                decorator.amount)/res.length, decorator.amount):
 
-            if self.finger_params is not None:
+                        if res.length*(1-z) < 200:  # too close to end of resonator
+                            continue
 
-                finger_cell = self.lay.create_cell("Finger", "QC", self.finger_params.as_list())
-                len_start = res.coupling_length + np.pi*res.radius/2 + res.y_offset/2
+                        x, y, rot = HangingResonatorCell.get_coord(z, pya.DPoint(0, 0), 0, res)
+                        trans = pya.DCplxTrans.new(1, 0, not up, 0, 0)*pya.DCplxTrans.new(1, rot, 0, x+x_prog, y)
+                        self.top.insert(pya.DCellInstArray(finger_cell.cell_index(), trans))
 
-                for z in np.linspace(len_start/res.length,
-                                     (len_start+self.finger_params.spacing*self.finger_params.amount)/res.length,
-                                     self.finger_params.amount):
-
-                    if res.length*(1-z) < 200:  # too close to end of resonator
-                        continue
-
-                    x, y, rot = HangingResonator.get_coord(z, pya.DPoint(0, 0), 0, res)
-                    trans = pya.DCplxTrans.new(1, 0, not up, 0, 0)*pya.DCplxTrans.new(1, rot, 0, x+x_prog, y)
-                    self.top.insert(pya.DCellInstArray(finger_cell.cell_index(), trans))
+                else:
+                    print(f"Skipping unknown decorator type '{type(decorator)}'")
 
             up = not up
 
@@ -660,8 +677,17 @@ class ChipBuilder():
             size_multiplier = data[1]
             logo_spacing = data[2]
 
-            self.lay.read(f"../../templates/{logo_name}.gds")
-            cell = self.lay.top_cells()[1]
+            cell: pya.Cell
+
+            if logo_name.startswith("qr:"):
+                cell = self.lay.create_cell("QRCode", lib_name, {"pixel_size": 5, "text": logo_name.split(":", 1)[1]})
+            elif logo_name.startswith("text:"):
+                cell = TextGen.write_text(self.lay, logo_name.split(":", 1)[1])
+                pass
+            else:
+                self.lay.read(f"../../templates/{logo_name}.gds")
+                cell = self.lay.top_cells()[1]
+
             bbox = cell.bbox()
             trans = pya.DCplxTrans.new(size_multiplier, 0, False,
                                        x_sign*(self.chip_size[0]/2 - logo_spacing - size_multiplier*bbox.width()/2000),
@@ -676,20 +702,21 @@ class ChipBuilder():
         """
         print("Writing text...")
 
-        frequencies = []
-        for res in self.resonator_list:
-            frequencies.append(Util.calc_f0(res.length*1000, self.eps_eff))
+        if "$FREQUENCIES$" in self.text:
+            frequencies = []
+            for res in self.resonator_list:
+                frequencies.append(Util.calc_f0(res.length*1000, self.eps_eff))
 
-        f_text = ""
+            f_text = ""
 
-        for i in range(len(frequencies)):
-            if len(frequencies) > 16 and i == np.floor(len(frequencies) / 2):
-                f_text += "\n"
-            f_text += "{:.2f}".format(frequencies[i])
-            if i < len(frequencies) - 1:
-                f_text += ", "
+            for i in range(len(frequencies)):
+                if len(frequencies) > 16 and i == np.floor(len(frequencies) / 2):
+                    f_text += "\n"
+                f_text += "{:.2f}".format(frequencies[i])
+                if i < len(frequencies) - 1:
+                    f_text += ", "
 
-        self.text = self.text.replace("$FREQUENCIES$", f_text)
+            self.text = self.text.replace("$FREQUENCIES$", f_text)
 
         lines = self.text.splitlines()
 
@@ -702,7 +729,7 @@ class ChipBuilder():
 
     def _perform_boolean_operations(self):
         """
-        Subroutine for performing the boolean layer operations. This has to be done after adding all of the cells
+        Subroutine for performing the boolean layer operations. This has to be done after adding all of the pcells
         """
 
         print("performing boolean operations...")
@@ -748,7 +775,6 @@ class ChipBuilder():
         processor.boolean(self.lay, self.top, l12, self.lay, self.top, l3, self.top.shapes(l12),
                           pya.EdgeProcessor.ModeAnd, True, True, True)
 
-
         # remove periodic holes from hd hole mask
         processor.boolean(self.lay, self.top, l12, self.lay, self.top, l11, self.top.shapes(l12),
                           pya.EdgeProcessor.ModeANotB, True, True, True)
@@ -789,6 +815,9 @@ class ChipBuilder():
         self.lay.clear_layer(l12)
         self.lay.clear_layer(l13)
 
+        # merge shapes
+        processor.boolean(self.lay, self.top, l1, self.lay, self.top, l1, self.top.shapes(l1),
+                          pya.EdgeProcessor.ModeAnd, True, True, True)
 
     def _rotate_design(self):
         """
@@ -797,6 +826,13 @@ class ChipBuilder():
         if self.global_rotation != 0:
             print("Rotating design...")
             self.lay.transform(pya.DCplxTrans.new(1, self.global_rotation, False, 0, 0))
+
+    def _scale_design(self, factor):
+        """
+        Rotate the whole design by the global rotation
+        """
+        print("Scaling design...")
+        self.lay.transform(pya.DCplxTrans.new(factor, 0, False, 0, 0))
 
     def _save_chip(self, save_name: str, file_format: str):
         """
@@ -813,7 +849,7 @@ class ChipBuilder():
         elif file_format.lower() == 'dxf':
             options = pya.SaveLayoutOptions()
             options.dxf_polygon_mode = 1
-            options.dbu = 0.001
+            options.dbu = self.lay.dbu
             options.scale_factor = 1
             options.format="DXF"
             self.lay.write("../../chips/" + save_name + ".dxf", options)

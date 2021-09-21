@@ -2,7 +2,7 @@ from pathlib import Path
 
 import src.library.KLayout.Main
 import src.library.TextGen as TextGen
-from src.library.KLayout.CellParams import *
+from src.library.Cells import *
 
 
 class AirbridgeBuilder:
@@ -22,7 +22,7 @@ class AirbridgeBuilder:
         self.top = None
         self.dbu = None
 
-    def create_chip(self, file_out, text=None, markers=True, hole_mask=False):
+    def create_chip(self, file_out, hole_mask=False):
         """
         Creates a chip from the blueprint in the given frequency range and saves it automatically as a .gds file.
         @param file_out: file name of the .gds file
@@ -40,10 +40,6 @@ class AirbridgeBuilder:
         if hole_mask is not False:
             self._write_fast_holes(hole_mask)
         self._write_structures()
-        # self._write_logos()
-        if markers:
-            self._write_markers_leo()
-        # self._write_text("30x25\n30x30\n30x35\n30x40\n30x45\n30x50\n20x25\n20x30\n20x35\n20x40\n20x45\n20x50\n10x25\n10x30\n10x35\n10x40\n10x45\n10x50\n20x25\n20x30\n20x35\n20x40\n20x45\n20x50\n9x25\n9x30\n9x35\n9x40\n9x45\n9x50\n20x25\n20x30\n20x35\n20x40\n20x45\n20x50\n")
         self._perform_boolean_operations()
         self._write_file(file_out)
 
@@ -84,10 +80,10 @@ class AirbridgeBuilder:
             for x in range(arr_size[0]):
                 for y in range(arr_size[1]):
 
-                    bridge_params = AirbridgeParams(pad_width, pad_height, pad_gap, bridge_pad_width, bridge_pad_height, bridge_width)
-                    bridge = self.lay.create_cell("Airbridge", "QC", bridge_params.as_list())
+                    bridge = Airbridge(pad_width, pad_height, pad_gap, bridge_pad_width, bridge_pad_height, bridge_width)
+                    bridge_cell = self.lay.create_cell(bridge.cell_name(), lib_name, bridge.as_list())
                     trans = pya.DCplxTrans.new(1, 0, False, prog_x, prog_y)
-                    self.top.insert(pya.DCellInstArray(bridge.cell_index(), trans))
+                    self.top.insert(pya.DCellInstArray(bridge_cell.cell_index(), trans))
 
                     prog_y += max_pad_gap+2*pad_height + spacing_y
 
@@ -112,10 +108,10 @@ class AirbridgeBuilder:
         for pad_gap in pad_gaps:
             for x in range(arr_size[0]):
                 for y in range(arr_size[1]):
-                    bridge_params = AirbridgeParams(pad_width, pad_height, pad_gap, bridge_pad_width, bridge_pad_height, bridge_width)
-                    bridge = self.lay.create_cell("Airbridge", "QC", bridge_params.as_list())
+                    bridge = Airbridge(pad_width, pad_height, pad_gap, bridge_pad_width, bridge_pad_height, bridge_width)
+                    bridge_cell = self.lay.create_cell(bridge.cell_name(), lib_name, bridge.as_list())
                     trans = pya.DCplxTrans.new(1, 0, False, prog_x, prog_y)
-                    self.top.insert(pya.DCellInstArray(bridge.cell_index(), trans))
+                    self.top.insert(pya.DCellInstArray(bridge_cell.cell_index(), trans))
 
                     prog_y += max_pad_gap+2*pad_height + spacing_y
 
@@ -140,10 +136,10 @@ class AirbridgeBuilder:
         for pad_gap in pad_gaps:
             for x in range(arr_size[0]):
                 for y in range(arr_size[1]):
-                    bridge_params = AirbridgeParams(pad_width, pad_height, pad_gap, bridge_pad_width, bridge_pad_height, bridge_width)
-                    bridge = self.lay.create_cell("Airbridge", "QC", bridge_params.as_list())
+                    bridge = Airbridge(pad_width, pad_height, pad_gap, bridge_pad_width, bridge_pad_height, bridge_width)
+                    bridge_cell = self.lay.create_cell(bridge.cell_name(), lib_name, bridge.as_list())
                     trans = pya.DCplxTrans.new(1, 0, False, prog_x, prog_y)
-                    self.top.insert(pya.DCellInstArray(bridge.cell_index(), trans))
+                    self.top.insert(pya.DCellInstArray(bridge_cell.cell_index(), trans))
 
                     prog_y += max_pad_gap+2*pad_height + spacing_y
 
@@ -164,10 +160,10 @@ class AirbridgeBuilder:
         for pad_gap in pad_gaps:
             for x in range(arr_size[0]):
                 for y in range(arr_size[1]):
-                    bridge_params = AirbridgeRoundParams(35, pad_gap, 22, bridge_width)
-                    bridge = self.lay.create_cell("AirbridgeRound", "QC", bridge_params.as_list())
+                    bridge = AirbridgeRound(35, pad_gap, 22, bridge_width)
+                    bridge_cell = self.lay.create_cell(bridge.cell_name(), lib_name, bridge.as_list())
                     trans = pya.DCplxTrans.new(1, 0, False, prog_x, prog_y)
-                    self.top.insert(pya.DCellInstArray(bridge.cell_index(), trans))
+                    self.top.insert(pya.DCellInstArray(bridge_cell.cell_index(), trans))
 
                     prog_y += max_pad_gap+2*pad_height + spacing_y
 
@@ -194,10 +190,10 @@ class AirbridgeBuilder:
         for pad_gap in pad_gaps:
             for x in range(arr_size[0]):
                 for y in range(arr_size[1]):
-                    bridge_params = AirbridgeParams(pad_width, pad_height, pad_gap, bridge_pad_width, bridge_pad_height, bridge_width)
-                    bridge = self.lay.create_cell("Airbridge", "QC", bridge_params.as_list())
+                    bridge = Airbridge(pad_width, pad_height, pad_gap, bridge_pad_width, bridge_pad_height, bridge_width)
+                    bridge_cell = self.lay.create_cell(bridge.cell_name(), lib_name, bridge.as_list())
                     trans = pya.DCplxTrans.new(1, 0, False, prog_x, prog_y)
-                    self.top.insert(pya.DCellInstArray(bridge.cell_index(), trans))
+                    self.top.insert(pya.DCellInstArray(bridge_cell.cell_index(), trans))
 
                     prog_y += max_pad_gap+2*pad_height + spacing_y
 
@@ -224,10 +220,10 @@ class AirbridgeBuilder:
         for pad_gap in pad_gaps:
             for x in range(arr_size[0]):
                 for y in range(arr_size[1]):
-                    bridge_params = AirbridgeParams(pad_width, pad_height, pad_gap, bridge_pad_width, bridge_pad_height, bridge_width)
-                    bridge = self.lay.create_cell("Airbridge", "QC", bridge_params.as_list())
+                    bridge = Airbridge(pad_width, pad_height, pad_gap, bridge_pad_width, bridge_pad_height, bridge_width)
+                    bridge_cell = self.lay.create_cell(bridge.cell_name(), lib_name, bridge.as_list())
                     trans = pya.DCplxTrans.new(1, 0, False, prog_x, prog_y)
-                    self.top.insert(pya.DCellInstArray(bridge.cell_index(), trans))
+                    self.top.insert(pya.DCellInstArray(bridge_cell.cell_index(), trans))
 
                     prog_y += max_pad_gap+2*pad_height + spacing_y
 
@@ -281,52 +277,6 @@ class AirbridgeBuilder:
                                    self.chip_height / 2 - logo_spacing - 325)
         self.top.insert(pya.DCellInstArray(cell_wmi, trans))
 
-    def _write_markers_leo(self):
-        """
-        Subroutine for writing markers on the chip.
-        """
-
-        l0 = self.lay.layer(pya.LayerInfo(0, 0))
-        l2 = self.lay.layer(pya.LayerInfo(2, 0))
-
-        marker_width = 10 / self.dbu
-        focus_width = 20 / self.dbu
-        x_shift = 1015 / self.dbu - marker_width
-        y_shift = x_shift
-        marker = pya.Box(-marker_width/2, -marker_width/2,
-                         marker_width/2, marker_width/2)
-        focus = pya.Polygon([pya.DPoint(-focus_width, 0),
-                             pya.DPoint(0, -focus_width),
-                             pya.DPoint(0, focus_width),
-                             pya.DPoint(focus_width, 0)])
-        focus_trans = pya.ICplxTrans(1, 0, False, 10*marker_width + focus_width, 0)
-        mask_trans = pya.ICplxTrans(30, 0, False, 0, 0)
-
-        # top left
-        top_left_trans = pya.ICplxTrans(1, 0, False, -self.chip_width / (2 * self.dbu) + x_shift, self.chip_height / (2 * self.dbu) - y_shift)
-        self.top.shapes(l0).insert(marker.transformed(top_left_trans))
-        self.top.shapes(l2).insert(marker.transformed(top_left_trans * mask_trans))
-        self.top.shapes(l0).insert(focus.transformed(top_left_trans * focus_trans))
-        self.top.shapes(l2).insert(marker.transformed(top_left_trans * focus_trans * mask_trans))
-        # top right
-        top_right_trans = pya.ICplxTrans(1, 0, False, self.chip_width / (2 * self.dbu) - x_shift, self.chip_height / (2 * self.dbu) - y_shift)
-        self.top.shapes(l0).insert(marker.transformed(top_right_trans))
-        self.top.shapes(l2).insert(marker.transformed(top_right_trans * mask_trans))
-        self.top.shapes(l0).insert(focus.transformed(top_right_trans * focus_trans))
-        self.top.shapes(l2).insert(marker.transformed(top_right_trans * focus_trans * mask_trans))
-        # bottom left
-        bottom_left_trans = pya.ICplxTrans(1, 0, False, -self.chip_width / (2 * self.dbu) + x_shift, -self.chip_height / (2 * self.dbu) + y_shift)
-        self.top.shapes(l0).insert(marker.transformed(bottom_left_trans))
-        self.top.shapes(l2).insert(marker.transformed(bottom_left_trans * mask_trans))
-        self.top.shapes(l0).insert(focus.transformed(bottom_left_trans * focus_trans))
-        self.top.shapes(l2).insert(marker.transformed(bottom_left_trans * focus_trans * mask_trans))
-        # bottom right
-        bottom_right_trans = pya.ICplxTrans(1, 0, False, self.chip_width / (2 * self.dbu) - x_shift, -self.chip_height / (2 * self.dbu) + y_shift)
-        self.top.shapes(l0).insert(marker.transformed(bottom_right_trans))
-        self.top.shapes(l2).insert(marker.transformed(bottom_right_trans * mask_trans))
-        self.top.shapes(l0).insert(focus.transformed(bottom_right_trans * focus_trans))
-        self.top.shapes(l2).insert(marker.transformed(bottom_right_trans * focus_trans * mask_trans))
-
     def _write_markers(self, inverted=False):
         """
         Subroutine for writing nanobeam markers on the chip
@@ -342,15 +292,13 @@ class AirbridgeBuilder:
         trans = pya.DCplxTrans.new(1, 0, False, 0, 0)
         self.top.insert(pya.DCellInstArray(cell_marker, trans))
 
-    def _write_text(self, text=None, frequencies=True):
+    def _write_text(self, text):
         """
         Subroutine for writing text on the chip.
-        :@param text: Text that will be printed on the chip. Set to None for printing the resonance frequencies
+        :@param text: Text that will be printed on the chip.
         """
         print("Writing text...")
 
-        if text is None:
-            text = ""
         lines = text.splitlines()
 
         y_shift = (-self.chip_height/2)  / self.dbu

@@ -19,11 +19,11 @@ from src.library.KLayout.Finger import *
 
 class Main(pya.Library):
     """
-    The library containing elements for creating a superconducting circuit mask.
+    Main script for registering the cells and library
     """
 
     def __init__(self):
-        self.description = "CPW Library"
+        self.description = "Quantum Computing resonator library by NB/LH"
 
         self.layout().register_pcell("Port", Port())
         self.layout().register_pcell("CustomPort", CustomPort())
@@ -42,7 +42,7 @@ class Main(pya.Library):
         self.layout().register_pcell("QRCode", QRCode())
         self.layout().register_pcell("Finger", Finger())
 
-        self.register("QC")
+        self.register("QCL")
 
 
 # Instantiate and register the library

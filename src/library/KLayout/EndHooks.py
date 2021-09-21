@@ -3,7 +3,7 @@ import klayout.db as pya
 
 class EndHooks(pya.PCellDeclarationHelper):
     """
-    End hooks for Nb-Al interface
+    End hooks for Nb-Al interface, deprecated
     """
 
     def __init__(self):

@@ -3,7 +3,7 @@ import klayout.db as pya
 
 class Straight(pya.PCellDeclarationHelper):
     """
-    Coplanar waveguide port
+    Coplanar waveguide straight
     """
 
     def __init__(self):

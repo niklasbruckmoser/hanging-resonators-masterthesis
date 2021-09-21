@@ -3,7 +3,7 @@ import klayout.db as pya
 
 class Hallbar(pya.PCellDeclarationHelper):
     """
-    Hallbar
+    Hallbar for materials measurements
     """
 
     def __init__(self):

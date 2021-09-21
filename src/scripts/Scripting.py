@@ -1,7 +1,9 @@
 import src.ChipBuilder as CB
-import src.library.KLayout.CellParams as CP
+import numpy as np
+# from src.ChipBuilderNew import ChipBuilderNew
+# import src.library.CellParamsNew as CP
 
-import src.legacy.ChipBuilderOld as CBO
+# import src.legacy.ChipBuilderOld as CBO
 
 """
 Tutorial for the Hanging Resonators Project
@@ -9,18 +11,183 @@ v3 06/2021
 """
 
 
+cb = CB.ChipBuilder("template_B72_control")
+
+for f, q in [(4, 5e5), (4.1, 3e5), (4.2, 7e5), (4.3, 1e5)]:
+    cb.add_resonator(f, q_ext=q)
+cb.set_text("B72-4 - low roughness test - ´f0´ from 4 - 5.2 GHz @ 100 MHz", False)
+cb.set_logo('lr', "qr:NB - 16.09.2021\nSi in (100) orientation, > 10kOhm\nPiranha cleaned + BOE\nUD Nb 300mA @ RT @ 5e-3 mbar\nQc = 5e5", 1, 200)
+cb.remove_hole_mask()
+cb.build_chip("q_ext_test")
+
+
+# cb = CB.ChipBuilder("template_B72_control")
+#
+# for f in np.linspace(4, 5.2, 13):
+#     cb.add_resonator(f)
+# cb.set_text("B72-4 - low roughness test - ´f0´ from 4 - 5.2 GHz @ 100 MHz", False)
+# cb.set_logo('lr', "qr:NB - 16.09.2021\nSi in (100) orientation, > 10kOhm\nPiranha cleaned + BOE\nUD Nb 300mA @ RT @ 5e-3 mbar\nQc = 5e5", 1, 200)
+# cb.build_chip("B72-4")
+
+# cb = CB.ChipBuilder("template_B72_Al2O3")
+#
+# for f in np.linspace(4, 5.2, 13):
+#     cb.add_resonator(f)
+# cb.set_text("B72-3 - sapphire chips (´epsilon´=9.27) - ´f0´ from 4 - 5.2 GHz @ 100 MHz", False)
+# cb.set_logo('lr', "qr:NB - 16.09.2021\nAl2O3 in (0001) orientation\nPiranha cleaned\nUD Nb 300mA @ RT @ 5e-3 mbar\nQc = 5e5", 1, 200)
+# cb.build_chip("B72-3")
+
+# cb = CB.ChipBuilder("template_B72_HF")
+#
+# for f in np.linspace(10, 18, 41):
+#     print(f)
+#     cb.add_resonator(f)
+# cb.set_text("B72-1 - high frequency chips - ´f0´ from 10 - 18 GHz @ 200 MHz", False)
+# cb.build_chip("B72-1")
+
+
+# cb = CB.ChipBuilder("template_B72_AB")
+#
+# for f in np.linspace(4, 5.2, 13):
+#     cb.add_resonator(f)
+#
+# for i in range(13):
+#     # airbridge = CB.Airbridge(22, 22, 40, 18, 18, 18, 200 if i < 6 else 500)
+#     airbridge = CB.AirbridgeRound(14, 40, 6, 12, 200 if i < 6 else 500)
+#     if i % 2-1:
+#         cb.add_decorator(i, airbridge)
+#
+# cb.set_text("B72-2 - Airbridge tests - ´f0´ from 4 - 5.2 GHz @ 100 MHz", False)
+# cb.build_chip("B72-2")
+
+# cb = CB.ChipBuilder("template_B64")
+# for f in [4, 4.1, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9, 5, 5.1]:
+#     cb.add_resonator(f, q_ext=50_000, coupling_ground=10)
+#
+# for f in [4.2, 5.2]:
+#     cb.add_resonator(f, q_ext=500_000)
+#
+# cb.set_text("Ta + 5nm TaN - ´f0´ from 4 to 5.2 GHz @ 100 MHz", False)
+# cb.remove_marker('all')
+# cb.remove_hole_mask()
+# cb.set_global_rotation(0)
+# cb.build_chip("Ta-3", file_format='dxf')
+
+
+# cb = CB.ChipBuilder("template_B64")
+# cb.set_resonator_list(cb.get_resonator_list(4, 5.2, 13))
+# cb.set_text("P10-6 RCA2 + Piranha + HF - ´f0´ from 4 to 5.2 GHz @ 100 MHz", False)
+# cb.remove_marker('all')
+# cb.build_chip("P10-6")
+#
+# cb = CB.ChipBuilder("template_B64")
+# cb.set_resonator_list(cb.get_resonator_list(4, 5.2, 13))
+# cb.set_text("P10-1 Piranha + HF - ´f0´ from 4 to 5.2 GHz @ 100 MHz", False)
+# cb.remove_marker('all')
+# cb.build_chip("P10-1")
+#
+# cb = CB.ChipBuilder("template_B64")
+# cb.set_resonator_list(cb.get_resonator_list(4, 5.2, 13))
+# cb.set_text("P10-5 Huang + HF - ´f0´ from 4 to 5.2 GHz @ 100 MHz", False)
+# cb.remove_marker('all')
+# cb.build_chip("P10-5")
+#
+# cb = CB.ChipBuilder("template_B64")
+# cb.set_resonator_list(cb.get_resonator_list(4, 5.2, 13))
+# cb.set_text("P10-9 HF - ´f0´ from 4 to 5.2 GHz @ 100 MHz", False)
+# cb.remove_marker('all')
+# cb.build_chip("P10-9")
+
+# cb = CB.ChipBuilder()
+# cb.set_text("P10-3 Nb Q1", False)
+# cb.remove_hole_mask()
+# cb.build_chip("p10-3-text")
+
+# cbn = ChipBuilderNew("template_P10")
+# for i in range(13):
+#     f = 4 + i*0.2
+#     AB_params = CP.Airbridge(22, 22, 40, 18, 18, 18, 200 if i < 6 else 500)
+#     AB_params = CP.AirbridgeRound(13, 40, 9, 18, 200 if i < 6 else 500)
+#     pos = cbn.add_resonator(f)
+#     if i%2 - 1:
+#         cbn.add_decorator(pos, AB_params)
+# cbn.remove_hole_mask()
+
+# cbn.add_resonator(f0=4.1, width=30)
+
+# cbn.build_chip("test-bridges")
+
+# cb = CB.ChipBuilder("template_B64")
+# cb.set_resonator_list(cb.get_resonator_list(4, 5.2, 13))
+# cb.set_text("QR Test - ´f0´ from 4 to 5.2 GHz @ 100 MHz", False)
+# cb.set_logo('lr', "qr:Air time: 3:30min, Plassys position: 9, MC BOE 7:1 for 30s, > 10kOhm Si 100 substrate, way more "
+#                   "details: sputtered on 23.07.2021, written with program 7 at 100mJ, used resist AZ MiR 701, "
+#                   "with 40um air bridges for better grounding, The code has been extended to investigate the behavior of"
+#                   " $z$ for N > 4. The parameters $A=0.2$ and $beta=0.1$ are kept constant, while increasing $N$ from 10 "
+#                   "up to 75. For each $N$ 20 iterations with different initial parameters are being calculated. "
+#                   "By looking at $abs{z}$ we can detect chimera states if the coherence of one subsystem is equal to "
+#                   "1, while the coherence of the other subsystem is smaller than 1.", 1, 300)
+# cb.remove_hole_mask()
+# cb.remove_marker('all')
+# cb.build_chip("QR-Test")
+
+# cb = CB.ChipBuilder("template_B64")
+# cb.set_resonator_list(cb.get_resonator_list(4, 5.2, 13))
+# cb.set_text("P9 RCA2 + Piranha + HF - ´f0´ from 4 to 5.2 GHz @ 100 MHz", False)
+# cb.remove_marker('all')
+# cb.build_chip("P9-RCA2-Piranha-HF")
+#
+# cb = CB.ChipBuilder("template_B64")
+# cb.set_resonator_list(cb.get_resonator_list(4, 5.2, 13))
+# cb.set_text("P9 Piranha + HF - ´f0´ from 4 to 5.2 GHz @ 100 MHz", False)
+# cb.remove_marker('all')
+# cb.build_chip("P9-Piranha-HF")
+#
+# cb = CB.ChipBuilder("template_B64")
+# cb.set_resonator_list(cb.get_resonator_list(4, 5.2, 13))
+# cb.set_text("P9 Huang + HF - ´f0´ from 4 to 5.2 GHz @ 100 MHz", False)
+# cb.remove_marker('all')
+# cb.build_chip("P9-Huang-HF")
+#
+# cb = CB.ChipBuilder("template_B64")
+# cb.set_resonator_list(cb.get_resonator_list(4, 5.2, 13))
+# cb.set_text("P9 HF - ´f0´ from 4 to 5.2 GHz @ 100 MHz", False)
+# cb.remove_marker('all')
+# cb.build_chip("P9-HF")
+
+# cb = CB.ChipBuilder("template_B64")
+# cb.set_resonator_list(cb.get_resonator_list(4, 5.2, 13))
+# cb.set_airbridges(True)
+# cb.set_airbridge_parameters(22, 22, 40, 18, 18, 18, 500)
+# cb.set_text("AB Chip 10 - ´f0´: $FREQUENCIES$", False)
+# cb.set_marker('all', "marker_AB_manual", 0)
+# cb.build_chip("ab-chip-10")
+
+# cb = CB.ChipBuilder("template_B64")
+# cb.set_resonator_list(cb.get_resonator_list(4, 5.2, 13))
+# cb.set_logo('lr', f"qr:www.wmi.badw.de", 2, 300)
+# cb.set_text("P8-1 - ´Qext´ = 5e5, ´f0´: $FREQUENCIES$", False)
+# cb.remove_marker('all')
+# cb.build_chip("P8-1")
 
 # cb = CB.ChipBuilder("template_B60_1_wet_etching")
-# # cb.set_default_resonator_parameters(y_offset=200)
 # cb.set_resonator_list(cb.get_resonator_list(4, 5.2, 13))
-# # cb.remove_hole_mask()
-# # cb.set_global_rotation(90)
-# cb.set_text("B60-1 - ´Qext´ = 5e5, ´f0´: $FREQUENCIES$", False)
-# cb.build_chip("test_fingers")
+# cb.set_global_rotation(90)
+# cb.set_logo('lr', f"qr:www.wmi.badw.de", 2, 300)
+# cb.set_text("Ta-1 - ´Qext´ = 5e5, ´f0´: $FREQUENCIES$", False)
+# cb.build_chip("Ta-1")
 
 
-cbo = CBO.ChipBuilder()
-cbo.create_chip("test_fingers", cbo.res_fingers_params(4, 6, 6), hole_mask="hole_mask_small")
+# cb = CB.ChipBuilder("template_W7_6x10")
+# cb.set_logo('lr', "qr:W7-1, Piranha + HF, 150nm Nb", 2, 300).set_text("W7-1", True)
+# cb.set_resonator_list(cb.get_resonator_list(4, 6, 21)).build_chip("W7-1")
+
+# cbo = CBO.ChipBuilder()
+# cbo.create_chip("test_fingers", cbo.res_fingers_params(4, 6, 6), hole_mask="hole_mask_small")
+
+
+
+
 
 # cbl = CB.ChipBuilder()
 # cbl.set_chip_size(8000, 4500)
@@ -33,7 +200,23 @@ cbo.create_chip("test_fingers", cbo.res_fingers_params(4, 6, 6), hole_mask="hole
 
 
 
-
+# def name():
+#     return w_name + "-" + str(res_id)
+#
+#
+# def next_name():
+#     global res_id
+#     res_id += 1
+#     return name()
+#
+#
+# w_name = "W7"
+# res_id = 0
+#
+# cb = CB.ChipBuilder("template_W7_6x10")
+#
+# cb.set_logo('lr', f"qr:www.wmi.badw.de", 2, 300).set_text(name(), True)
+# cb.set_resonator_list(cb.get_resonator_list(4, 6, 21)).build_chip(name())
 
 
 

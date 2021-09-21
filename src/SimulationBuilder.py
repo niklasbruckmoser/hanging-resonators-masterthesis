@@ -1,14 +1,17 @@
 import numpy as np
 # import src.library.CPW_pieces
 # import src.library.CPWLib
-import src.library.CPWLibrary.Main
+import src.library.KLayout.Main
 import src.library.TextGen as TextGen
-import src.library.CPWLibrary.HangingResonator as HangingResonator
+import src.library.KLayout.HangingResonator as HangingResonator
 from pathlib import Path
-from src.library.CPWLibrary.CellParams import *
+from src.library.Cells import *
 
 
 class SimulationBuilder:
+    """
+    Currently not working, might be merged with the ChipBuilder
+    """
 
     def __init__(self, chip_width=3000, chip_height=3000, width=10, gap=6, ground=50, hole=40):
 
@@ -43,7 +46,7 @@ class SimulationBuilder:
         self._write_file(file_out)
         self._write_tech_file(file_out)
 
-    def _write_structures(self, res_params):
+    def _write_structures(self, resonator):
         """
         Subroutine for writing the main structures.
         """
@@ -54,7 +57,7 @@ class SimulationBuilder:
         # Transmission line
         tl_len = self.chip_width
 
-        straight_params = StraightParams(tl_len, 10, 6, 50, 40)
+        straight_params = Straight(tl_len, 10, 6, 50, 40)
         straight = self.lay.create_cell("Straight", "QC", straight_params.as_list())
         trans = pya.DCplxTrans.new(1, 0, False, x_prog, -self.chip_height/2 + self.chip_height/10)
         self.top.insert(pya.DCellInstArray(straight.cell_index(), trans))
@@ -62,10 +65,10 @@ class SimulationBuilder:
 
         # print("Frequency: " + str(HangingResonator.calc_f0(res_params.length*1000)) + " GHz")
 
-        if type(res_params) == HangingResonatorParams:
-            res_cell = self.lay.create_cell("HangingResonator", "QC", res_params.as_list())
+        if isinstance(resonator, Resonator):
+            res_cell = self.lay.create_cell(resonator.cell_name(), lib_name, resonator.as_list())
         else:
-            res_cell = self.lay.create_cell("HangingResonatorFingers", "QC", res_params.as_list())
+            raise ValueError(f"Unknown resonator type '{type(resonator)}'")
         trans = pya.DCplxTrans.new(1, 0, False, 0, -self.chip_height/2 + self.chip_height/10)
         self.top.insert(pya.DCellInstArray(res_cell.cell_index(), trans))
 
