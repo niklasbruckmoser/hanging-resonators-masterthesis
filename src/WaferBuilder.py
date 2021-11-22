@@ -62,7 +62,9 @@ class WaferBuilder:
         Add a single chip path to the chip list
         @param path: path to the chip
         """
-        self.chip_list.append(f"{path}{'' if path.lower().endswith('.gds') else '.gds'}")
+        if path.lower().endswith(".gds"):
+            path = path[:-4]
+        self.chip_list.append(f"{path}")
         return self
 
     def add_chip_folder(self, path: str, prefix=None) -> WaferBuilder:
@@ -115,11 +117,10 @@ class WaferBuilder:
         circle = pya.SimplePolygon(points)
         main_cell.shapes(lay.layer(100, 0)).insert(circle)
 
-        mark = _mark(300/dbu, 5/dbu)
 
         if len(self.chip_list) > len(self.chip_positions):
             # raise ValueError("Cannot fit all chips onto the wafer!")
-            pass
+            pass  # do not care, rather fill up as much as possible
 
         idx = 0
         for chip in self.chip_list:
@@ -133,6 +134,7 @@ class WaferBuilder:
             x, y = self.chip_positions[idx]
             main_cell.insert(pya.DCellInstArray(chip_cell, pya.DCplxTrans.new(1, 0, False, x, y)))
             mark_trans = pya.DCplxTrans.new(1, 0, False, (x-self.spacing_x/2)/dbu, (y-self.spacing_y/2)/dbu)
+            mark = _mark(300/dbu, 5/dbu)
             main_cell.shapes(lay.layer(1, 0)).insert(mark.transform(mark_trans))
             idx += 1
 
@@ -145,7 +147,7 @@ class WaferBuilder:
 
 def _mark(l: float, w: float):
     """
-    Helper for creating cutting marks.
+    Helper for creating dicing marks.
     :@param l: Arm length of the mark, measured from (0, 0)
     :@param w: Arm width of the mark, measured from the axis (resulting in a total width of 2*w)
     :@return: A list containing the coordinates of the mark, centered around (0, 0)
