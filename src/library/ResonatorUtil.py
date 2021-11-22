@@ -95,6 +95,15 @@ def L_kin(w, g, t, lambda_0) -> float:
         t = 2*lambda_0  # effective thickness of twice the penetration depth
     return L_kin_raw(w, g, t, lambda_0)/(2*k_0(w, g)**2*K(k_0(w, g))**2)*(-np.log(t/(4*w))-k_0(w, g)*np.log(t/(4*(w+2*g)))+2*(w+g)/(w+2*g)*np.log(g/(w+g)))
 
+def theta_T(T, Tc) -> float:
+    """
+    Temperature dependence of the london penetration depth and thus kinetic inductance. Assuming empirical γ=4.
+    For base temperatures of DR systems, this value is very close to 1.
+    @param T: temperature of the system
+    @param Tc: critical temperature of the film
+    @return: temperature-dependent weight factor
+    """
+    return 1/(1-(T/Tc)**4)
 
 #########################
 # TL-Resonator coupling #
