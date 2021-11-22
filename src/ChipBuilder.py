@@ -30,7 +30,7 @@ class ChipBuilder:
         self.ground = 10
         self.hole = 40
         self.eps_eff = 6.45
-        self.port = Port(160, 200, 300, 100, self.width, self.gap, self.ground, self.hole)
+        self.port = Port(160, 200, 300, 100, self.width, self.gap, self.ground, self.hole, 90)
         self.hole_mask = "hole_mask_small"
         self.resonator_list = []  # structure: list of resonator parameters
         self.decorator_list = []  # structure: containing lists of decorators, e.g. air bridges etc
@@ -45,7 +45,9 @@ class ChipBuilder:
         self.set_default_finger()
         self.default_airbridge: Airbridge
         self.set_default_airbridge()
-        self.default_resonator = HangingResonator(950, 5000, 950, 300, 5e5, 20, 100, 1, 10, 6, 10, 6, 10, 40)
+        self.default_resonator = HangingResonator(950, 5000, 950, 300, 5e5, 20, 100, 1, 10, 6, 10, 6, 10, 40, 90)
+
+        self.do_boolean = True
 
         # init from template
         if template is not None:
@@ -124,7 +126,7 @@ class ChipBuilder:
             self.port = port
         else:
             self.port = Port(width_port, length_taper, length_port, spacing, self.width, self.gap,
-                             self.ground, self.hole)
+                             self.ground, self.hole, self.port.resolution)
         return self
 
     def _re_init_port(self):
@@ -306,7 +308,7 @@ class ChipBuilder:
             self.marker_list.pop('lr', None)
         return self
 
-    def set_text(self, text: str, write_frequencies: bool) -> ChipBuilder:
+    def set_text(self, text: str, write_frequencies=False) -> ChipBuilder:
         """
         Set a text that will be displayed at the bottom of the chip
         @param text: String containing the text, multiple lines are supported (\n)
@@ -354,10 +356,10 @@ class ChipBuilder:
             # save q_ext in coupling length - dirty, but more compact than saving a new variable
             self.default_resonator = HangingResonator(segment_length, 5000, segment_length, y_offset, q_ext,
                                                       coupling_ground, radius, shorted, self.width, self.gap,
-                                                      width, gap, ground, hole)
+                                                      width, gap, ground, hole, self.default_resonator.resolution)
         return self
 
-    def add_resonator(self, f0: float, segment_length=None, y_offset=None, q_ext=None, coupling_ground=None,
+    def add_resonator(self, f0: float, segment_length=None, x_offset=None, y_offset=None, q_ext=None, coupling_ground=None,
                       radius=None, shorted=None, width=None, gap=None, ground=None,
                       hole=None, resonator=None) -> int:
         """
@@ -380,6 +382,7 @@ class ChipBuilder:
         else:
             # initialize values from default resonator params
             segment_length = segment_length or self.default_resonator.segment_length
+            x_offset = x_offset or self.default_resonator.x_offset
             y_offset = y_offset or self.default_resonator.y_offset
             q_ext = q_ext or self.default_resonator.coupling_length  # q_ext is being saved in coupling length
             coupling_ground = coupling_ground or self.default_resonator.coupling_ground
@@ -394,9 +397,9 @@ class ChipBuilder:
             coupling_length = Util.calc_coupling_length(self.width, self.gap, width, gap, coupling_ground, length, q_ext,
                                                         self.eps_eff)
 
-            self.resonator_list.append(HangingResonator(segment_length, length, segment_length, y_offset, coupling_length,
+            self.resonator_list.append(HangingResonator(segment_length, length, x_offset, y_offset, coupling_length,
                                                         coupling_ground, radius, shorted, self.width, self.gap, width, gap, ground,
-                                                        hole))
+                                                        hole, self.default_resonator.resolution))
         return len(self.resonator_list)-1
 
     def add_decorator(self, position, *args):
@@ -419,7 +422,7 @@ class ChipBuilder:
                 self.decorator_list.append(None)
             self.decorator_list[position] = args
 
-    def add_resonator_list(self, f0_start: float, f0_end: float, amount_resonators: int, segment_length=None,
+    def add_resonator_list(self, f0_start: float, f0_end: float, amount_resonators: int, segment_length=None, x_offset=None,
                            y_offset=None, q_ext=None, coupling_ground=None, radius=None, shorted=None, width=None,
                            gap=None, ground=None, hole=None, resonator_list=None) -> ChipBuilder:
         """
@@ -428,6 +431,7 @@ class ChipBuilder:
         @param f0_end: the end resonance frequency (assuming lambda/4)
         @param amount_resonators: amount of resonators
         @param segment_length: length of the x straight
+        @param x_offset: length of the x offset
         @param y_offset: length of the y offset
         @param q_ext: external coupling to the resonator
         @param coupling_ground: ground distance between the resonator and the transmission line
@@ -445,7 +449,7 @@ class ChipBuilder:
             interval = (f0_end - f0_start) / (amount_resonators - 1)
             for i in range(amount_resonators):
                 f0 = f0_start + i*interval
-                self.add_resonator(f0, segment_length, y_offset, q_ext, coupling_ground, radius, shorted, width, gap, ground, hole)
+                self.add_resonator(f0, segment_length, x_offset, y_offset, q_ext, coupling_ground, radius, shorted, width, gap, ground, hole)
         return self
 
     #######################
@@ -460,18 +464,26 @@ class ChipBuilder:
         @param save_name: name that will be used for the file
         @param file_format: format of the file, by default 'gds'
         """
+
+        if save_name.lower().endswith(".gds"):
+            file_format = "gds"
+            save_name = save_name[:-4]
+        if save_name.lower().endswith(".dxf"):
+            file_format = "dxf"
+            save_name = save_name[:-4]
+
         print(f"Creating chip {save_name}.{file_format}...")
 
         self.lay = pya.Layout()
         self.top = self.lay.create_cell("TOP")
-        # self.lay.dbu = 1
         self.dbu = self.lay.dbu
 
         self._write_structures()
         self._write_markers()
         self._write_logos()
         self._write_text()
-        self._perform_boolean_operations()
+        if self.do_boolean:
+            self._perform_boolean_operations()
         self._rotate_design()
         self._save_chip(save_name, file_format)
 
