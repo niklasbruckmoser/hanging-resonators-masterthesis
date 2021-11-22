@@ -16,6 +16,7 @@ class Airbridge(pya.PCellDeclarationHelper):
         self.param("bridge_pad_width", self.TypeDouble, "width of the bridge pad", default=80)
         self.param("bridge_pad_height", self.TypeDouble, "height of the bridge pad", default=20)
         self.param("bridge_width", self.TypeDouble, "width of the bridge", default=40)
+        self.param("positive_mask", self.TypeInt, "write bridges with positive resist?", default=0)
 
     def display_text_impl(self):
         # Provide a descriptive text for the cell
@@ -34,12 +35,14 @@ class Airbridge(pya.PCellDeclarationHelper):
         bridge_pad_width = self.bridge_pad_width / dbu
         bridge_pad_height = self.bridge_pad_height / dbu
         bridge_width = self.bridge_width / dbu
+        positive_mask = self.positive_mask
+        positive_mask_buffer = 20 / dbu
         # create shape
 
-        create_airbridge(self, pya.DPoint(0, 0), 0, pad_width, pad_height, gap, bridge_pad_width, bridge_pad_height, bridge_width)
+        create_airbridge(self, pya.DPoint(0, 0), 0, pad_width, pad_height, gap, bridge_pad_width, bridge_pad_height, bridge_width, positive_mask, positive_mask_buffer)
 
 
-def create_airbridge(obj, start, rotation, pad_width, pad_height, gap, bridge_pad_width, bridge_pad_height, bridge_width):
+def create_airbridge(obj, start, rotation, pad_width, pad_height, gap, bridge_pad_width, bridge_pad_height, bridge_width, positive_mask, positive_mask_buffer):
 
     p_u_list = []
     p_l_list = []
@@ -82,10 +85,33 @@ def create_airbridge(obj, start, rotation, pad_width, pad_height, gap, bridge_pa
 
     l15 = obj.layout.layer(15, 0)
     l16 = obj.layout.layer(16, 0)
+    l17 = obj.layout.layer(17, 0)
 
     obj.cell.shapes(l15).insert(pya.Polygon(p_u_list).transformed(shift))
     obj.cell.shapes(l15).insert(pya.Polygon(p_l_list).transformed(shift))
-    obj.cell.shapes(l16).insert(pya.Polygon(b_list).transformed(shift))
+
+    if positive_mask:
+
+
+        x_buffer = pad_width + positive_mask_buffer*2
+        y_buffer = 2*pad_height+gap + positive_mask_buffer*2
+
+        mask = []
+        mask.append(pya.DPoint(-x_buffer/2, y_buffer/2))
+        mask.append(pya.DPoint(x_buffer/2, y_buffer/2))
+        mask.append(pya.DPoint(x_buffer/2, -y_buffer/2))
+        mask.append(pya.DPoint(-x_buffer/2, -y_buffer/2))
+
+        obj.cell.shapes(l16).insert(pya.Polygon(b_list).transformed(shift))
+        obj.cell.shapes(l17).insert(pya.Polygon(mask).transformed(shift))
+
+        processor = pya.ShapeProcessor()
+        processor.boolean(obj.layout, obj.cell, l17, obj.layout, obj.cell, l16, obj.cell.shapes(l16),
+                          pya.EdgeProcessor.ModeANotB, True, True, True)
+        obj.layout.clear_layer(l17)
+
+    else:
+        obj.cell.shapes(l16).insert(pya.Polygon(b_list).transformed(shift))
 
     return shift*pya.DPoint(0, 0)
 
