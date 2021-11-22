@@ -35,7 +35,7 @@ class Curve(CellObject):
     """
     CPW curve
     """
-    def __init__(self, radius=101, angle=90, right_curve=1, width=10, gap=6, ground=50, hole=40):
+    def __init__(self, radius=101, angle=90, right_curve=1, width=10, gap=6, ground=50, hole=40, resolution=90):
         self.radius = radius
         self.angle = angle
         self.right_curve = right_curve
@@ -43,6 +43,7 @@ class Curve(CellObject):
         self.gap = gap
         self.ground = ground
         self.hole = hole
+        self.resolution=resolution
         pass
 
     def end_point(self):
@@ -72,11 +73,11 @@ class Curve(CellObject):
         :@return: a dictionary containing all parameters
         """
         return {"radius": self.radius, "angle": self.angle, "right_curve": self.right_curve, "width": self.width,
-                "gap": self.gap, "ground": self.ground, "hole": self.hole}
+                "gap": self.gap, "ground": self.ground, "hole": self.hole, "resolution": self.resolution}
 
 
 class Port(CellObject):
-    def __init__(self, width_port=160, length_taper=300, length_port=140, spacing=0, width=10, gap=6, ground=50, hole=40):
+    def __init__(self, width_port=160, length_taper=300, length_port=140, spacing=0, width=10, gap=6, ground=50, hole=40, resolution=90):
         """
         Initializes smooth port parameters from the own KLayout library.
         :@param cp: Related chip params
@@ -89,6 +90,7 @@ class Port(CellObject):
         self.gap = gap
         self.ground = ground
         self.hole = hole
+        self.resolution = resolution
 
     def end_point(self):
         """
@@ -107,7 +109,7 @@ class Port(CellObject):
         :@return: a dictionary containing all parameters
         """
         return {"length_taper": self.length_taper, "length_port": self.length_port, "width_port": self.width_port,
-                "spacing": self.spacing, "width": self.width, "gap": self.gap, "ground": self.ground, "hole": self.hole}
+                "spacing": self.spacing, "width": self.width, "gap": self.gap, "ground": self.ground, "hole": self.hole, "resolution": self.resolution}
 
 
 class CustomPort(CellObject):
@@ -303,7 +305,7 @@ class Finger(Decorator):
 
 class Airbridge(Decorator):
 
-    def __init__(self, pad_width=100, pad_height=40, gap=35, bridge_pad_width=80, bridge_pad_height=20, bridge_width=40, spacing=500):
+    def __init__(self, pad_width=100, pad_height=40, gap=35, bridge_pad_width=80, bridge_pad_height=20, bridge_width=40, spacing=500, positive_mask=0):
         self.pad_width = pad_width
         self.pad_height = pad_height
         self.gap = gap
@@ -311,6 +313,7 @@ class Airbridge(Decorator):
         self.brigde_pad_height = bridge_pad_height
         self.bridge_width = bridge_width
         self.spacing = spacing
+        self.positive_mask=positive_mask
         
     def cell_name(self):
         return "Airbridge"
@@ -322,7 +325,7 @@ class Airbridge(Decorator):
         """
         return {"pad_width": self.pad_width, "pad_height": self.pad_height, "gap": self.gap,
                 "bridge_pad_width": self.brigde_pad_width, "bridge_pad_height": self.brigde_pad_height,
-                "bridge_width": self.bridge_width}
+                "bridge_width": self.bridge_width, "positive_mask": self.positive_mask}
 
 
 class AirbridgeRound(Airbridge):
@@ -411,7 +414,7 @@ class HangingResonatorOld(Resonator):
 class HangingResonator(Resonator):
 
     def __init__(self, segment_length, length, x_offset, y_offset, coupling_length, coupling_ground, radius, shorted, width_tl,
-                 gap_tl, width, gap, ground, hole):
+                 gap_tl, width, gap, ground, hole, resolution=90):
 
         self.segment_length = segment_length
         self.length = length
@@ -427,6 +430,7 @@ class HangingResonator(Resonator):
         self.gap = gap
         self.ground = ground
         self.hole = hole
+        self.resolution = resolution
         
     def cell_name(self):
         return "HangingResonator"
@@ -439,7 +443,7 @@ class HangingResonator(Resonator):
         return {"segment_length": self.segment_length, "length": self.length, "x_offset": self.x_offset,
                 "y_offset": self.y_offset, "coupling_length": self.coupling_length, "coupling_ground": self.coupling_ground,
                 "radius": self.radius, "shorted": self.shorted, "width_tl": self.width_tl, "gap_tl": self.gap_tl, "width": self.width,
-                "gap": self.gap, "ground": self.ground, "hole": self.hole}
+                "gap": self.gap, "ground": self.ground, "hole": self.hole, "resolution": self.resolution}
 
 class HangingResonatorFingers(Resonator):
     """
