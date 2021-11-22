@@ -21,6 +21,7 @@ class Curve(pya.PCellDeclarationHelper):
         self.param("gap", self.TypeDouble, "gap cpw", default=6)
         self.param("ground", self.TypeDouble, "ground", default=50)
         self.param("hole", self.TypeDouble, "hole mask", default=40)
+        self.param("resolution", self.TypeInt, "Angle resolution", default=90)
 
     def display_text_impl(self):
         # Provide a descriptive text for the cell
@@ -40,13 +41,14 @@ class Curve(pya.PCellDeclarationHelper):
         gap = self.gap / dbu
         ground = self.ground / dbu
         hole = self.hole / dbu
+        resolution = self.resolution
         # create shape
 
-        create_curve(self, pya.DPoint(0, 0), 0, radius, angle, right_curve, width, gap, ground, hole)
+        create_curve(self, pya.DPoint(0, 0), 0, radius, angle, right_curve, width, gap, ground, hole, resolution)
 
 
 # angle in degrees
-def create_curve(obj, start, rotation, radius, angle, right_curve, width, gap, ground, hole):
+def create_curve(obj, start, rotation, radius, angle, right_curve, width, gap, ground, hole, resolution):
     dbu = obj.layout.dbu
     g_u_list = []
     g_l_list = []
@@ -57,7 +59,7 @@ def create_curve(obj, start, rotation, radius, angle, right_curve, width, gap, g
     # min radius check
     # radius = max(radius, width/2+gap+ground+hole)
 
-    res = 90
+    res = resolution  # 90
 
     # define outer radius as the full circle to the upper hd hole mask
     outer_radius = radius + width/2 + gap + ground + hole

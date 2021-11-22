@@ -33,6 +33,7 @@ class HangingResonator(pya.PCellDeclarationHelper):
         self.param("gap", self.TypeDouble, "gap cpw", default=6)
         self.param("ground", self.TypeDouble, "ground", default=50)
         self.param("hole", self.TypeDouble, "hole mask", default=40)
+        self.param("resolution", self.TypeInt, "angle resolution", default=90)
 
     def display_text_impl(self):
         # Provide a descriptive text for the cell
@@ -59,12 +60,13 @@ class HangingResonator(pya.PCellDeclarationHelper):
         gap = self.gap / dbu
         ground = self.ground / dbu
         hole = self.hole / dbu
+        resolution = self.resolution
 
         # create shape
-        create_res(self, pya.DPoint(0, 0), 0, segment_length, length, x_offset, y_offset, coupling_length, coupling_ground, radius, shorted, width_tl, gap_tl, width, gap, ground, hole)
+        create_res(self, pya.DPoint(0, 0), 0, segment_length, length, x_offset, y_offset, coupling_length, coupling_ground, radius, shorted, width_tl, gap_tl, width, gap, ground, hole, resolution)
 
 
-def create_res(obj, start, rotation, segment_length, length, x_offset, y_offset, coupling_length, coupling_ground, radius, shorted, width_tl, gap_tl, width, gap, ground, hole):
+def create_res(obj, start, rotation, segment_length, length, x_offset, y_offset, coupling_length, coupling_ground, radius, shorted, width_tl, gap_tl, width, gap, ground, hole, resolution):
 
     dbu = obj.layout.dbu
 
@@ -73,7 +75,7 @@ def create_res(obj, start, rotation, segment_length, length, x_offset, y_offset,
 
     curr = create_straight(obj, curr, rotation, coupling_length, width, gap, ground, hole)
     length -= coupling_length
-    curr = create_curve(obj, curr, rotation, radius, 90, 0, width, gap, ground, hole)
+    curr = create_curve(obj, curr, rotation, radius, 90, 0, width, gap, ground, hole, resolution)
     length -= np.pi/180*radius*90
 
     if length < y_offset:
@@ -86,10 +88,10 @@ def create_res(obj, start, rotation, segment_length, length, x_offset, y_offset,
 
     if length < np.pi/180*radius*90:
         end_angle = 180*length/np.pi/radius
-        curr = create_curve(obj, curr, 90+rotation, radius, end_angle, 0, width, gap, ground, hole)
+        curr = create_curve(obj, curr, 90+rotation, radius, end_angle, 0, width, gap, ground, hole, resolution)
         create_end(obj, curr, 360+end_angle+rotation, shorted, width, gap, ground, hole)
         return
-    curr = create_curve(obj, curr, 90+rotation, radius, 90, 0, width, gap, ground, hole)
+    curr = create_curve(obj, curr, 90+rotation, radius, 90, 0, width, gap, ground, hole, resolution)
     length -= np.pi/180*radius*90
 
     if x_offset == 0:
@@ -100,6 +102,7 @@ def create_res(obj, start, rotation, segment_length, length, x_offset, y_offset,
         return
 
     curr = create_straight(obj, curr, 180+rotation, x_offset, width, gap, ground, hole)
+    # print(f"created straight with offset {x_offset}")
     length -= x_offset
 
     # begin meandering loop
@@ -109,10 +112,10 @@ def create_res(obj, start, rotation, segment_length, length, x_offset, y_offset,
     while True:
         if length < np.pi/180*radius*180:
             end_angle = 180*length/np.pi/radius
-            curr = create_curve(obj, curr, 180+rotation if right is True else rotation, radius, end_angle, right, width, gap, ground, hole)
+            curr = create_curve(obj, curr, 180+rotation if right is True else rotation, radius, end_angle, right, width, gap, ground, hole, resolution)
             create_end(obj, curr, 180-end_angle+rotation if right else 360+end_angle+rotation, shorted, width, gap, ground, hole)
             return
-        curr = create_curve(obj, curr, 180+rotation if right is True else rotation, radius, 180, right, width, gap, ground, hole)
+        curr = create_curve(obj, curr, 180+rotation if right is True else rotation, radius, 180, right, width, gap, ground, hole, resolution)
         length -= np.pi/180*radius*180
 
         if length < segment_length:

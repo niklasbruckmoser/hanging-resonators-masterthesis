@@ -20,6 +20,7 @@ class Port(pya.PCellDeclarationHelper):
         self.param("gap", self.TypeDouble, "gap cpw", default=6)
         self.param("ground", self.TypeDouble, "ground", default=50)
         self.param("hole", self.TypeDouble, "hole mask", default=40)
+        self.param("resolution", self.TypeInt, "taper resolution", default=50)
 
     def display_text_impl(self):
         # Provide a descriptive text for the cell
@@ -40,12 +41,13 @@ class Port(pya.PCellDeclarationHelper):
         gap_cpw = self.gap / dbu
         ground = self.ground / dbu
         hole = self.hole / dbu
+        resolution = self.resolution
         # create shape
 
-        create_smooth_port(self, pya.DPoint(0, 0), length_taper, length_port, width_port, spacing, width_cpw, gap_cpw, ground, hole)
+        create_smooth_port(self, pya.DPoint(0, 0), length_taper, length_port, width_port, spacing, width_cpw, gap_cpw, ground, hole, resolution)
 
 
-def create_smooth_port(obj, start, length_taper, length_port, width_port, spacing, width_cpw, gap_cpw, ground, hole):
+def create_smooth_port(obj, start, length_taper, length_port, width_port, spacing, width_cpw, gap_cpw, ground, hole, resolution):
     """
     Main method for creating the port - contains the geometry
     @param length_taper: taper length
@@ -71,7 +73,7 @@ def create_smooth_port(obj, start, length_taper, length_port, width_port, spacin
 
     x_offset = hole + ground + gap_max + length_port
 
-    res = 50
+    res = resolution  # 50
 
     for z in np.linspace(0, 1, res):
         h_w = get_height(z)*(width_port-width_cpw)/2+width_cpw/2
