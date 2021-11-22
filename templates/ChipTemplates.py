@@ -1,4 +1,5 @@
 from src.ChipBuilder import ChipBuilder
+from src.library import Cells as Cell
 
 """
 Chip templates for fast initialization.
@@ -207,6 +208,23 @@ def template_B72_control(obj: ChipBuilder):
     obj.set_eps_eff(6.45)
     obj.set_global_rotation(90)
     obj.set_text("´f0´ (GHz): $FREQUENCIES$", False)
+    obj.set_airbridges(False)
+
+def template_W1(obj: ChipBuilder):
+    """
+    Template for the B72-4 control chip
+    """
+    obj.set_chip_size(10000, 6000).set_TL_width(10).set_TL_gap(6)
+    obj.set_TL_ground(50).set_TL_hole(40).set_hole_mask("hole_mask_small")
+    obj.set_port(160, 200, 300, 100)
+    obj.set_port(port=Cell.CustomPort(140, 60, 300, 140, 110, 10, 6, 50, 40))
+    obj.set_default_resonator(resonator=Cell.HangingResonator(1116, 5000, 558, 300, 7e4, 7, 101, 1, 10, 6, 10, 6, 50, 40))
+    # obj.set_default_resonator(1116, 300, 7e4, 7, 101, 1, 10, 6, 50, 40)
+    obj.set_logo('ur', "logo_mcqst", 0.4, 200).set_logo('ul', "logo_wmi", 0.5, 200)
+    obj.set_eps_eff(6.45)
+    # obj.set_global_rotation(90)
+    obj.set_text("´f0´ (GHz): $FREQUENCIES$", False)
+    obj.set_airbridges(False)
 
 #
 # def template_P10(obj: ChipBuilderNew):
