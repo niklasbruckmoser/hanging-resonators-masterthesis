@@ -1,5 +1,6 @@
 import klayout.db as pya
 import numpy as np
+import scipy as sc
 
 
 class Port(pya.PCellDeclarationHelper):
@@ -179,7 +180,8 @@ def fixed_point_poly(xf, yf):
     mat[n + 1:, n + 1:] = 0
     vec[:n + 1] = yx_n
     vec[n + 1:] = yf
-    params = np.linalg.solve(mat, vec)
+    # params = np.linalg.solve(mat, vec)
+    params = sc.linalg.solve(mat, vec)
     return params[:n + 1]
 
 
